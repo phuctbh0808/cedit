@@ -348,7 +348,7 @@ fn process_init_reserve(
     validate_switchboard_keys(&lending_market, switchboard_feed_info)?;
 
     let (market_price, smoothed_market_price) =
-        get_price(Some(switchboard_feed_info), pyth_price_info, clock)?;
+        get_price(Some(switchboard_feed_info), pyth_price_info, pyth_product_info, clock)?;
 
     let authority_signer_seeds = &[
         lending_market_info.key.as_ref(),
@@ -457,6 +457,7 @@ fn process_refresh_reserve(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
     let account_info_iter = &mut accounts.iter().peekable();
     let reserve_info = next_account_info(account_info_iter)?;
     let pyth_price_info = next_account_info(account_info_iter)?;
+    let pyth_product_info = next_account_info(account_info_iter)?;
     // set switchboard to a placeholder account info
     let mut switchboard_feed_info = None;
     // if the next account info exists and is not the clock set it to be switchboard
@@ -472,6 +473,7 @@ fn process_refresh_reserve(program_id: &Pubkey, accounts: &[AccountInfo]) -> Pro
         program_id,
         reserve_info,
         pyth_price_info,
+        pyth_product_info,
         switchboard_feed_info,
         clock,
     )
@@ -481,6 +483,7 @@ fn _refresh_reserve<'a>(
     program_id: &Pubkey,
     reserve_info: &AccountInfo<'a>,
     pyth_price_info: &AccountInfo<'a>,
+    pyth_product_info: &AccountInfo<'a>,
     switchboard_feed_info: Option<&AccountInfo<'a>>,
     clock: &Clock,
 ) -> ProgramResult {
@@ -503,7 +506,7 @@ fn _refresh_reserve<'a>(
     }
 
     let (market_price, smoothed_market_price) =
-        get_price(switchboard_feed_info, pyth_price_info, clock)?;
+        get_price(switchboard_feed_info, pyth_price_info, pyth_product_info, clock)?;
 
     reserve.liquidity.market_price = market_price;
 
@@ -2938,9 +2941,10 @@ fn unpack_mint(data: &[u8]) -> Result<Mint, LendingError> {
 fn get_price(
     switchboard_feed_info: Option<&AccountInfo>,
     pyth_price_account_info: &AccountInfo,
+    price_product_info: &AccountInfo,
     clock: &Clock,
 ) -> Result<(Decimal, Option<Decimal>), ProgramError> {
-    if let Ok(prices) = get_pyth_price(pyth_price_account_info, clock) {
+    if let Ok(prices) = get_pyth_price(pyth_price_account_info, price_product_info, clock) {
         return Ok((prices.0, Some(prices.1)));
     }
 
