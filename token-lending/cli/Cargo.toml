@@ -1,0 +1,25 @@
+[package]
+authors = ["Relend Maintainers <dev@renec.foundation>"]
+description = "Relend Program CLI"
+edition = "2021"
+license = "Apache-2.0"
+name = "relend-program-cli"
+version = "0.1.0"
+
+[dependencies]
+clap = "=2.34.0"
+solana-clap-utils = "1.13.3"
+solana-cli-config = "1.13.3"
+solana-client = "1.13.3"
+solana-logger = "1.13.3"
+solana-sdk = "1.13.3"
+solana-program = "1.13.3"
+solana-account-decoder = "1.13.3"
+relend-sdk = { path="../sdk" }
+relend-program = { path="../program", features = [ "no-entrypoint" ] }
+spl-token = { version = "3.3.0", features=["no-entrypoint"] }
+spl-associated-token-account = "1.0"
+
+[[bin]]
+name = "relend-program"
+path = "src/main.rs"
