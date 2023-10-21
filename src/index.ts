@@ -84,8 +84,8 @@ program
     const caseETH = "reethmainnet";
     const caseRenec = "renecmainnet";
     const caseUSD_test = "reusdtestnet";
-    const caseBTC_test = "rebtcmainnet";
-    const caseETH_test = "reethmainnet";
+    const caseBTC_test = "rebtctestnet";
+    const caseETH_test = "reethtestnet";
     const caseRenec_test = "renectestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
@@ -182,7 +182,7 @@ program
       "--verbose",
     ];
 
-    let exeCmd = `target/debug/relend-program --program ${program_id} add-reserve ` + exeParams.join(" ");
+    let exeCmd = `RUST_BACKTRACE=1 target/debug/relend-program --program ${program_id} add-reserve ` + exeParams.join(" ");
     exec(exeCmd, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error: ${error.message}`);
