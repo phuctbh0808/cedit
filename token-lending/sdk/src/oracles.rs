@@ -2,95 +2,111 @@
 use crate::{
     self as relend_program,
     error::LendingError,
-    math::{Decimal, TryDiv},
-    state::*,
+    math::{Decimal, TryDiv, TryMul},
 };
-use anchor_lang::{require, AnchorDeserialize};
+// use pyth_sdk_solana;
 use solana_program::{
     account_info::AccountInfo, msg, program_error::ProgramError, sysvar::clock::Clock,
 };
 use std::{convert::TryInto, result::Result};
 
 pub type UnixTimestamp = i64;
-
-pub struct PriceCalculator {
-    pub price: u64,
-    pub expo: i32,
-}
-
-impl PriceCalculator {
-    pub fn new(price: u64, expo: i32) -> Result<Self, ProgramError> {
-        require!(expo <= 0, LendingError::ExpoPositiveNonSupport);
-
-        Ok(Self { price, expo })
-    }
+pub struct Price {
+    /// Price.
+    pub price:        i64,
+    /// Confidence interval.
+    pub conf:         u64,
+    /// Exponent.
+    pub expo:         i32,
+    /// Publish time.
+    pub publish_time: UnixTimestamp,
 }
 
 pub fn get_pyth_price(
-    price_info: &AccountInfo,
-    price_product: &AccountInfo,
+    pyth_price_info: &AccountInfo,
     clock: &Clock,
 ) -> Result<(Decimal, Decimal), ProgramError> {
-    // const STALE_AFTER_SLOTS_ELAPSED: u64 = 60;
+    // const PYTH_CONFIDENCE_RATIO: u64 = 10;
+    // const STALE_AFTER_SLOTS_ELAPSED: u64 = 240; // roughly 2 min
 
-    // let mut oracle_product_data: &[u8] = &price_product.try_borrow_data()?;
-    // let oracle_product_info = Product::deserialize(&mut oracle_product_data)?;
-    // require!(
-    //     oracle_product_info.price_account.eq(&price_info.key),
-    //     LendingError::InvalidPriceOfProductOracle
-    // );
-
-    // if *price_info.key == relend_program::NULL_PUBKEY {
+    // if *pyth_price_info.key == solend_program::NULL_PUBKEY {
     //     return Err(LendingError::NullOracleConfig.into());
     // }
 
-    // require!(
-    //     oracle_product_info.status == ProductStatus::Online,
-    //     LendingError::UnavailableProduct
-    // );
+    // let data = &pyth_price_info.try_borrow_data()?;
+    // let price_account = pyth_sdk_solana::state::load_price_account(data).map_err(|e| {
+    //     msg!("Couldn't load price feed from account info: {:?}", e);
+    //     LendingError::InvalidOracleConfig
+    // })?;
+    // let pyth_price = price_account
+    //     .get_price_no_older_than(clock, STALE_AFTER_SLOTS_ELAPSED)
+    //     .ok_or_else(|| {
+    //         msg!("Pyth oracle price is too stale!");
+    //         LendingError::InvalidOracleConfig
+    //     })?;
 
-    // let mut oracle_price_data: &[u8] = &price_info.try_borrow_data()?;
-    // let oracle_price_info = Price::deserialize(&mut oracle_price_data)?;
+    // let price: u64 = pyth_price.price.try_into().map_err(|_| {
+    //     msg!("Oracle price cannot be negative");
+    //     LendingError::InvalidOracleConfig
+    // })?;
 
-    // require!(
-    //     oracle_price_info.status == PriceStatus::Online,
-    //     LendingError::UnavailablePriceInfo
-    // );
+    // // Perhaps confidence_ratio should exist as a per reserve config
+    // // 100/confidence_ratio = maximum size of confidence range as a percent of price
+    // // confidence_ratio of 10 filters out pyth prices with conf > 10% of price
+    // if pyth_price.conf.saturating_mul(PYTH_CONFIDENCE_RATIO) > price {
+    //     msg!(
+    //         "Oracle price confidence is too wide. price: {}, conf: {}",
+    //         price,
+    //         pyth_price.conf,
+    //     );
+    //     return Err(LendingError::InvalidOracleConfig.into());
+    // }
 
-    // let now = to_timestamp_u64(clock.unix_timestamp)?;
-    // // price must be not older than over 60s
-    // require!(
-    //     now - STALE_AFTER_SLOTS_ELAPSED <= oracle_price_info.timestamp,
-    //     LendingError::PriceTooOld
-    // );
+    let pyth_price = Price { price: 2350, conf: 1234, expo: 1234, publish_time: 1506 };
 
-    let price_calculator = PriceCalculator::new(1, 0)?;
-    let market_price = price_calculator_to_decimal(&price_calculator);
-    let ema_price = market_price.clone()?;
+    let market_price = pyth_price_to_decimal(&pyth_price);
+    let ema_price = {
+        // let price_feed = price_account.to_price_feed(pyth_price_info.key);
+        // this can be unchecked bc the ema price is only used to _limit_ borrows and withdraws.
+        // ie staleness doesn't _really_ matter for this field.
+        //
+        // the pyth EMA is also updated every time the regular spot price is updated anyways so in
+        // reality the staleness should never be an issue.
+        // let ema_price = price_feed.get_ema_price_unchecked();
+        let ema_price =  Price { price: 2350, conf: 1234, expo: 1234, publish_time: 1506 };
+        pyth_price_to_decimal(&ema_price)?
+    };
 
     Ok((market_price?, ema_price))
 }
 
-// fn to_timestamp_u64(t: i64) -> Result<u64, LendingError> {
-//     u64::try_from(t).or(Err(LendingError::InvalidTimestampConversion))
-// }
-
-fn price_calculator_to_decimal(pyth_price: &PriceCalculator) -> Result<Decimal, ProgramError> {
+fn pyth_price_to_decimal(pyth_price: &Price) -> Result<Decimal, ProgramError> {
     let price: u64 = pyth_price.price.try_into().map_err(|_| {
         msg!("Oracle price cannot be negative");
         LendingError::InvalidOracleConfig
     })?;
 
-    let exponent = pyth_price
-        .expo
-        .checked_abs()
-        .ok_or(LendingError::MathOverflow)?
-        .try_into()
-        .map_err(|_| LendingError::MathOverflow)?;
-    let decimals = 10u64
-        .checked_pow(exponent)
-        .ok_or(LendingError::MathOverflow)?;
-    Decimal::from(price).try_div(decimals)
+    if pyth_price.expo >= 0 {
+        let exponent = pyth_price
+            .expo
+            .try_into()
+            .map_err(|_| LendingError::MathOverflow)?;
+        let zeros = 10u64
+            .checked_pow(exponent)
+            .ok_or(LendingError::MathOverflow)?;
+        Decimal::from(price).try_mul(zeros)
+    } else {
+        let exponent = pyth_price
+            .expo
+            .checked_abs()
+            .ok_or(LendingError::MathOverflow)?
+            .try_into()
+            .map_err(|_| LendingError::MathOverflow)?;
+        let decimals = 10u64
+            .checked_pow(exponent)
+            .ok_or(LendingError::MathOverflow)?;
+        Decimal::from(price).try_div(decimals)
+    }
 }
 
 // #[cfg(test)]
