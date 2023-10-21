@@ -4,10 +4,22 @@ const fs = require("fs");
 import { Command } from "commander";
 import * as anchor from "@project-serum/anchor";
 import { exec } from "child_process";
-import { PublicKey, Connection, Keypair, Transaction } from "@solana/web3.js";
-import { NATIVE_MINT, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount, 
-createAssociatedTokenAccountInstruction, 
-createAssociatedTokenAccount} from "spl-token";
+import {
+  PublicKey,
+  Connection,
+  Keypair,
+  Transaction,
+  sendAndConfirmTransaction,
+  SystemProgram,
+  LAMPORTS_PER_SOL,
+} from "@solana/web3.js";
+import {
+  NATIVE_MINT,
+  getAssociatedTokenAddress,
+  getOrCreateAssociatedTokenAccount,
+  createAssociatedTokenAccountInstruction,
+  createSyncNativeInstruction,
+} from "spl-token";
 
 const program = new Command();
 
@@ -133,7 +145,8 @@ program
     const connection = new Connection(network_url, opts);
     const sourceKey = JSON.parse(fs.readFileSync(payer));
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
-    let tokenAccount = keypair.publicKey.toBase58(); // ATA of source owner which is payer
+    let sourceOwner = keypair.publicKey;
+    let sourceOwnerAta = sourceOwner.toBase58(); // ATA of source owner which is payer
     let tokenProgramId = reUSD;
     switch (token_sympol.toUpperCase()) {
       case "REBTC":
@@ -149,22 +162,48 @@ program
         connection,
         keypair,
         tokenProgramId,
-        new PublicKey(tokenAccount),
+        sourceOwner,
       );
 
-      console.log("source owner address: ", tokenAccount);
-      tokenAccount = ata.address.toBase58();
+      console.log("source owner address: ", sourceOwnerAta);
+      sourceOwnerAta = ata.address.toBase58();
     } else {
       console.log("Wrap RENEC to spl token so that it can be used as supply token");
-      const ata = await createAssociatedTokenAccount(connection, keypair, NATIVE_MINT, new PublicKey(tokenAccount));
-      tokenAccount = ata.toBase58();
+      const associatedTokenAccount = await getAssociatedTokenAddress(NATIVE_MINT, sourceOwner);
+
+      console.log("Create token account to hold wrapped RENEC");
+      const ataTransaction = new Transaction().add(
+        createAssociatedTokenAccountInstruction(
+          sourceOwner,
+          associatedTokenAccount,
+          sourceOwner,
+          NATIVE_MINT,
+        ),
+      );
+
+      await sendAndConfirmTransaction(connection, ataTransaction, [keypair]);
+
+      console.log(
+        "Transfer RENEC to associated token account and use SyncNative to update wrapped RENEC balance",
+      );
+      const reTransferTransaction = new Transaction().add(
+        SystemProgram.transfer({
+          fromPubkey: sourceOwner,
+          toPubkey: associatedTokenAccount,
+          lamports: LAMPORTS_PER_SOL,
+        }),
+        createSyncNativeInstruction(associatedTokenAccount),
+      );
+
+      await sendAndConfirmTransaction(connection, reTransferTransaction, [keypair]);
+      sourceOwnerAta = associatedTokenAccount.toBase58();
     }
 
     const exeParams = [
       `--market-owner ${market_owner}`,
       `--source-owner ${payer}`,
       `--market ${market_addr}`,
-      `--source ${tokenAccount}`,
+      `--source ${sourceOwnerAta}`,
       `--amount ${amount}`,
       `--pyth-product ${oracleProduct}`,
       `--pyth-price ${oraclePrice}`,
@@ -190,7 +229,9 @@ program
       "--verbose",
     ];
 
-    let exeCmd = `RUST_BACKTRACE=1 target/debug/relend-program --program ${program_id} add-reserve ` + exeParams.join(" ");
+    let exeCmd =
+      `RUST_BACKTRACE=1 target/debug/relend-program --program ${program_id} add-reserve ` +
+      exeParams.join(" ");
     exec(exeCmd, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error: ${error.message}`);
