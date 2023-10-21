@@ -126,7 +126,7 @@ struct PartialReserveFees {
 type Error = Box<dyn std::error::Error>;
 type CommandResult = Result<(), Error>;
 
-const PYTH_PROGRAM_ID: &str = "gSbePebfvPy7tRqimPoVecS2UsBvYv46ynrzWocc92s";
+const PYTH_PROGRAM_ID: &str = "Gc6MiDQNH7fLX9HmRqSnPqPe1LipKwspiuF2zycsHRHL";
 // const SWITCHBOARD_PROGRAM_ID: &str = "DtmE9D2CSB4L5D6A15mraeEjrGMm6auWVzgaD8hK2tZM";
 const SWITCHBOARD_PROGRAM_ID_DEV: &str = "7azgmy1pFXHikv36q1zZASvFq5vFa39TT9NweVugKKTU";
 

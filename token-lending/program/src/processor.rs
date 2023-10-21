@@ -2958,8 +2958,8 @@ fn get_price(
 }
 
 fn get_switchboard_price(
-    switchboard_feed_info: &AccountInfo,
-    clock: &Clock,
+    _switchboard_feed_info: &AccountInfo,
+    _clock: &Clock,
 ) -> Result<Decimal, ProgramError> {
     // const STALE_AFTER_SLOTS_ELAPSED: u64 = 240;
 
@@ -3142,9 +3142,9 @@ fn spl_token_burn(params: TokenBurnParams<'_, '_>) -> ProgramResult {
 /// validates pyth AccountInfos
 #[inline(always)]
 fn validate_pyth_keys(
-    lending_market: &LendingMarket,
-    pyth_product_info: &AccountInfo,
-    pyth_price_info: &AccountInfo,
+    _lending_market: &LendingMarket,
+    _pyth_product_info: &AccountInfo,
+    _pyth_price_info: &AccountInfo,
 ) -> ProgramResult {
     // if *pyth_price_info.key == relend_program::NULL_PUBKEY {
     //     return Ok(());
@@ -3176,8 +3176,8 @@ fn validate_pyth_keys(
 
 /// validates switchboard AccountInfo
 fn validate_switchboard_keys(
-    lending_market: &LendingMarket,
-    switchboard_feed_info: &AccountInfo,
+    _lending_market: &LendingMarket,
+    _switchboard_feed_info: &AccountInfo,
 ) -> ProgramResult {
     // if *switchboard_feed_info.key == relend_program::NULL_PUBKEY {
     //     return Ok(());

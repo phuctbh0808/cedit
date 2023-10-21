@@ -203,6 +203,26 @@ pub enum LendingError {
     /// Isolated Tier Asset Violation
     #[error("Isolated Tier Asset Violation")]
     IsolatedTierAssetViolation,
+    /// Invalid Price of Product Oracle
+    #[error("Invalid Price of Product Oracle")]
+    InvalidPriceOfProductOracle,
+    /// Product Price is unavailable
+    #[error("Product Price is unavailable")]
+    UnavailableProduct,
+    /// Price Info is unavailable
+    #[error("Price Info is unavailable")]
+    UnavailablePriceInfo,
+
+    // 60
+    /// Timestamp should be convertible from i64 to u64
+    #[error("Timestamp should be convertible from i64 to u64")]
+    InvalidTimestampConversion,
+    /// Oracle price is too old
+    #[error("Oracle price is too old")]
+    PriceTooOld,
+    /// Positive expo is not supported
+    #[error("Positive expo is not supported")]
+    ExpoPositiveNonSupport,
 }
 
 impl From<LendingError> for ProgramError {
