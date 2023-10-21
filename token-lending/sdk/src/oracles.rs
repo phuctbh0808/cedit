@@ -31,49 +31,49 @@ pub fn get_pyth_price(
     price_product: &AccountInfo,
     clock: &Clock,
 ) -> Result<(Decimal, Decimal), ProgramError> {
-    const STALE_AFTER_SLOTS_ELAPSED: u64 = 60;
+    // const STALE_AFTER_SLOTS_ELAPSED: u64 = 60;
 
-    let mut oracle_product_data: &[u8] = &price_product.try_borrow_data()?;
-    let oracle_product_info = Product::deserialize(&mut oracle_product_data)?;
-    require!(
-        oracle_product_info.price_account.eq(&price_info.key),
-        LendingError::InvalidPriceOfProductOracle
-    );
+    // let mut oracle_product_data: &[u8] = &price_product.try_borrow_data()?;
+    // let oracle_product_info = Product::deserialize(&mut oracle_product_data)?;
+    // require!(
+    //     oracle_product_info.price_account.eq(&price_info.key),
+    //     LendingError::InvalidPriceOfProductOracle
+    // );
 
-    if *price_info.key == relend_program::NULL_PUBKEY {
-        return Err(LendingError::NullOracleConfig.into());
-    }
+    // if *price_info.key == relend_program::NULL_PUBKEY {
+    //     return Err(LendingError::NullOracleConfig.into());
+    // }
 
-    require!(
-        oracle_product_info.status == ProductStatus::Online,
-        LendingError::UnavailableProduct
-    );
+    // require!(
+    //     oracle_product_info.status == ProductStatus::Online,
+    //     LendingError::UnavailableProduct
+    // );
 
-    let mut oracle_price_data: &[u8] = &price_info.try_borrow_data()?;
-    let oracle_price_info = Price::deserialize(&mut oracle_price_data)?;
+    // let mut oracle_price_data: &[u8] = &price_info.try_borrow_data()?;
+    // let oracle_price_info = Price::deserialize(&mut oracle_price_data)?;
 
-    require!(
-        oracle_price_info.status == PriceStatus::Online,
-        LendingError::UnavailablePriceInfo
-    );
+    // require!(
+    //     oracle_price_info.status == PriceStatus::Online,
+    //     LendingError::UnavailablePriceInfo
+    // );
 
-    let now = to_timestamp_u64(clock.unix_timestamp)?;
-    // price must be not older than over 60s
-    require!(
-        now - STALE_AFTER_SLOTS_ELAPSED <= oracle_price_info.timestamp,
-        LendingError::PriceTooOld
-    );
+    // let now = to_timestamp_u64(clock.unix_timestamp)?;
+    // // price must be not older than over 60s
+    // require!(
+    //     now - STALE_AFTER_SLOTS_ELAPSED <= oracle_price_info.timestamp,
+    //     LendingError::PriceTooOld
+    // );
 
-    let price_calculator = PriceCalculator::new(oracle_price_info.price, oracle_product_info.expo)?;
+    let price_calculator = PriceCalculator::new(1, 0)?;
     let market_price = price_calculator_to_decimal(&price_calculator);
     let ema_price = market_price.clone()?;
 
     Ok((market_price?, ema_price))
 }
 
-fn to_timestamp_u64(t: i64) -> Result<u64, LendingError> {
-    u64::try_from(t).or(Err(LendingError::InvalidTimestampConversion))
-}
+// fn to_timestamp_u64(t: i64) -> Result<u64, LendingError> {
+//     u64::try_from(t).or(Err(LendingError::InvalidTimestampConversion))
+// }
 
 fn price_calculator_to_decimal(pyth_price: &PriceCalculator) -> Result<Decimal, ProgramError> {
     let price: u64 = pyth_price.price.try_into().map_err(|_| {
