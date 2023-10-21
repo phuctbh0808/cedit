@@ -24,8 +24,7 @@ echo "Owner: $OWNER";
 echo "Payer $PAYER";
 
 echo "Creating Lending Market";
-CREATE_MARKET_OUTPUT=`target/debug/relend-program create-market \
-  --program      $PROGRAM_ID \
+CREATE_MARKET_OUTPUT=`target/debug/relend-program --program $PROGRAM_ID create-market \
   --fee-payer    $PAYER \
   --market-owner $OWNER \
   --verbose`;
