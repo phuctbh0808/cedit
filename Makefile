@@ -23,4 +23,4 @@ deploy: set-cluster-url
 	@./scripts/deploy.sh "$(deployer)"
 
 init-market:
-	@./scripts/init-market.sh "$(program_id)" "$(owner)" "$(market_owner)"
+	@./scripts/init-market.sh "$(program_id)" "$(owner)" "$(payer)"

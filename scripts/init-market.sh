@@ -13,23 +13,22 @@ else
 fi
 
 if [[ -n $3 ]]; then
-    MARKET_OWNER=$3
+    PAYER=$3
 else
-    echo "Error: the market owner is missing: $MARKET_OWNER"
+    echo "Error: the payer is missing: $PAYER"
     exit 1
 fi
 
 echo "Program ID: $PROGRAM_ID";
 echo "Owner: $OWNER";
-echo "Market Owner $MARKET_OWNER";
+echo "Payer $PAYER";
 
 echo "Creating Lending Market";
 CREATE_MARKET_OUTPUT=`target/debug/relend-program create-market \
   --program      $PROGRAM_ID \
-  --fee-payer    $OWNER \
-  --market-owner $MARKET_OWNER \
+  --fee-payer    $PAYER \
+  --market-owner $OWNER \
   --verbose`;
 
+echo "Use the market address below to add reserves in the next step:"
 echo "$CREATE_MARKET_OUTPUT";
-MARKET_ADDR=`echo $CREATE_MARKET_OUTPUT | head -n1 | awk '{print $4}'`;
-sed -i.bak "s/^MARKET_ADDR=.*/MARKET_ADDR=$MARKET_ADDR/" $FILE && rm $FILE.bak
