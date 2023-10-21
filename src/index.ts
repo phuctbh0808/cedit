@@ -129,7 +129,7 @@ program
     console.log("Add new reserve");
     console.log("params:", params);
     const connection = new Connection(network_url, opts);
-    const sourceKey = JSON.parse(fs.readFileSync(payer))
+    const sourceKey = JSON.parse(fs.readFileSync(payer));
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
     let tokenAccount = keypair.publicKey.toBase58(); // ATA of source owner which is payer
     let tokenProgramId = reUSD;
@@ -149,7 +149,28 @@ program
         tokenProgramId,
         new PublicKey(tokenAccount),
       );
+
+      console.log("source owner address: ", tokenAccount);
       tokenAccount = ata.address.toBase58();
+    } else {
+      console.log("Wrap RENEC to spl token so that it can be used as supply token");
+      const wrapCmd = `spl-token wrap --fee-payer=${payer} ${amount} ${market_owner}`;
+      const { stdout, stderr } = await exec(wrapCmd);
+      if (stderr) {
+        console.error(stderr);
+        return;
+      }
+
+      const stdoutText = stdout ? stdout.toString() : ""; // Add null check
+      const match = stdoutText.match(/into\s+(\S+)/);
+      if (match) {
+        tokenAccount = match[1];
+        console.log("Wrapped RENEC ata: ", tokenAccount);
+      } else {
+        console.log("Response: ", stdout);
+        console.error("Failed to extract wrapped RENEC ata");
+        return;
+      }
     }
 
     const exeParams = [
