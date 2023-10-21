@@ -8,17 +8,15 @@ import {
   PublicKey,
   Connection,
   Keypair,
-  Transaction,
-  sendAndConfirmTransaction,
-  SystemProgram,
   LAMPORTS_PER_SOL,
+  sendAndConfirmTransaction,
+  Transaction,
+  SystemProgram,
 } from "@solana/web3.js";
 import {
-  NATIVE_MINT,
-  getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
-  createAssociatedTokenAccountInstruction,
   createSyncNativeInstruction,
+  NATIVE_MINT,
 } from "spl-token";
 
 const program = new Command();
@@ -26,6 +24,27 @@ const program = new Command();
 const opts: anchor.web3.ConfirmOptions = {
   commitment: "confirmed",
 };
+
+async function getRENECBalance(walletPublicKey: PublicKey, connection: Connection) {
+  try {
+    // Fetch the balance of the wallet
+    const balance = await connection.getBalance(walletPublicKey);
+    return balance / LAMPORTS_PER_SOL; // Add return statement
+  } catch (error) {
+    console.error('Error checking RENEC balance:', error);
+  }
+}
+
+async function getSPLTokenBalance(tokenAccount: PublicKey, connection: Connection) {
+  try {
+    // Fetch the token balance of the wallet
+    const tokenAccountInfo = await connection.getTokenAccountBalance(tokenAccount);
+    return tokenAccountInfo.value.uiAmount; // Add return statement
+  } catch (error) {
+    console.error('Error checking SPL token balance:', error);
+    throw error; // Rethrow error to propagate it up the call stack
+  }
+}
 
 program
   .command("add-reserve")
@@ -142,6 +161,7 @@ program
 
     console.log("Add new reserve");
     console.log("params:", params);
+    amount = parseFloat(amount);
     const connection = new Connection(network_url, opts);
     const sourceKey = JSON.parse(fs.readFileSync(payer));
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
@@ -165,23 +185,29 @@ program
         sourceOwner,
       );
 
+      const balance = await getSPLTokenBalance(ata.address, connection);
+      if (balance && balance < amount) { 
+        console.log(`Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`);
+        return;
+      }
+
       console.log("source owner address: ", sourceOwnerAta);
       sourceOwnerAta = ata.address.toBase58();
     } else {
+      const balance = await getRENECBalance(sourceOwner, connection);
+      const needAmount = amount + 0.01; // 0.01 RENEC for wrapped fee
+      if (balance && balance < needAmount) { 
+        console.log(`Please fund ${needAmount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`);
+        return;
+      }
+
       console.log("Wrap RENEC to spl token so that it can be used as supply token");
-      const associatedTokenAccount = await getAssociatedTokenAddress(NATIVE_MINT, sourceOwner);
-
-      console.log("Create token account to hold wrapped RENEC");
-      const ataTransaction = new Transaction().add(
-        createAssociatedTokenAccountInstruction(
-          sourceOwner,
-          associatedTokenAccount,
-          sourceOwner,
-          NATIVE_MINT,
-        ),
+      const ata = await getOrCreateAssociatedTokenAccount(
+        connection,
+        keypair,
+        NATIVE_MINT,
+        sourceOwner,
       );
-
-      await sendAndConfirmTransaction(connection, ataTransaction, [keypair]);
 
       console.log(
         "Transfer RENEC to associated token account and use SyncNative to update wrapped RENEC balance",
@@ -189,14 +215,16 @@ program
       const reTransferTransaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: sourceOwner,
-          toPubkey: associatedTokenAccount,
-          lamports: LAMPORTS_PER_SOL,
+          toPubkey: ata.address,
+          lamports: LAMPORTS_PER_SOL*needAmount, 
         }),
-        createSyncNativeInstruction(associatedTokenAccount),
+        createSyncNativeInstruction(ata.address),
       );
 
       await sendAndConfirmTransaction(connection, reTransferTransaction, [keypair]);
-      sourceOwnerAta = associatedTokenAccount.toBase58();
+
+      console.log("End wrapped");
+      sourceOwnerAta = ata.address.toBase58();
     }
 
     const exeParams = [
