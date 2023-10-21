@@ -4,8 +4,10 @@ const fs = require("fs");
 import { Command } from "commander";
 import * as anchor from "@project-serum/anchor";
 import { exec } from "child_process";
-import { PublicKey, Connection, Keypair } from "@solana/web3.js";
-import { getOrCreateAssociatedTokenAccount } from "spl-token";
+import { PublicKey, Connection, Keypair, Transaction } from "@solana/web3.js";
+import { NATIVE_MINT, getAssociatedTokenAddress, getOrCreateAssociatedTokenAccount, 
+createAssociatedTokenAccountInstruction, 
+createAssociatedTokenAccount} from "spl-token";
 
 const program = new Command();
 
@@ -154,23 +156,8 @@ program
       tokenAccount = ata.address.toBase58();
     } else {
       console.log("Wrap RENEC to spl token so that it can be used as supply token");
-      const wrapCmd = `spl-token wrap --fee-payer=${payer} ${amount} ${market_owner}`;
-      const { stdout, stderr } = await exec(wrapCmd);
-      if (stderr) {
-        console.error(stderr);
-        return;
-      }
-
-      const stdoutText = stdout ? stdout.toString() : ""; // Add null check
-      const match = stdoutText.match(/into\s+(\S+)/);
-      if (match) {
-        tokenAccount = match[1];
-        console.log("Wrapped RENEC ata: ", tokenAccount);
-      } else {
-        console.log("Response: ", stdout);
-        console.error("Failed to extract wrapped RENEC ata");
-        return;
-      }
+      const ata = await createAssociatedTokenAccount(connection, keypair, NATIVE_MINT, new PublicKey(tokenAccount));
+      tokenAccount = ata.toBase58();
     }
 
     const exeParams = [
