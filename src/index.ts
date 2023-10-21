@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const fs = require("fs");
 import { Command } from "commander";
 import * as anchor from "@project-serum/anchor";
 import { exec } from "child_process";
@@ -128,7 +129,8 @@ program
     console.log("Add new reserve");
     console.log("params:", params);
     const connection = new Connection(network_url, opts);
-    const keypair = Keypair.fromSecretKey(Uint8Array.from(payer));
+    const sourceKey = JSON.parse(fs.readFileSync(payer))
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
     let tokenAccount = keypair.publicKey.toBase58(); // ATA of source owner which is payer
     let tokenProgramId = reUSD;
     switch (token_sympol.toUpperCase()) {
