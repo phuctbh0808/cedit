@@ -32,6 +32,7 @@ async function getRENECBalance(walletPublicKey: PublicKey, connection: Connectio
     return balance / LAMPORTS_PER_SOL; // Add return statement
   } catch (error) {
     console.error('Error checking RENEC balance:', error);
+    return 0;
   }
 }
 
@@ -39,10 +40,10 @@ async function getSPLTokenBalance(tokenAccount: PublicKey, connection: Connectio
   try {
     // Fetch the token balance of the wallet
     const tokenAccountInfo = await connection.getTokenAccountBalance(tokenAccount);
-    return tokenAccountInfo.value.uiAmount; // Add return statement
+    return tokenAccountInfo.value.uiAmount ?? 0; // Add return statement
   } catch (error) {
     console.error('Error checking SPL token balance:', error);
-    throw error; // Rethrow error to propagate it up the call stack
+    return 0;
   }
 }
 
@@ -186,7 +187,7 @@ program
       );
 
       const balance = await getSPLTokenBalance(ata.address, connection);
-      if (balance && balance < amount) { 
+      if (balance < amount) { 
         console.log(`Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`);
         return;
       }
@@ -196,7 +197,7 @@ program
     } else {
       const balance = await getRENECBalance(sourceOwner, connection);
       const needAmount = amount + 0.01; // 0.01 RENEC for wrapped fee
-      if (balance && balance < needAmount) { 
+      if (balance < needAmount) { 
         console.log(`Please fund ${needAmount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`);
         return;
       }
