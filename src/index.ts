@@ -213,11 +213,12 @@ program
       console.log(
         "Transfer RENEC to associated token account and use SyncNative to update wrapped RENEC balance",
       );
+      const transferAmount = BigInt(Math.ceil(LAMPORTS_PER_SOL * needAmount));
       const reTransferTransaction = new Transaction().add(
         SystemProgram.transfer({
           fromPubkey: sourceOwner,
           toPubkey: ata.address,
-          lamports: LAMPORTS_PER_SOL*needAmount, 
+          lamports: transferAmount, 
         }),
         createSyncNativeInstruction(ata.address),
       );
