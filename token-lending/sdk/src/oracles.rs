@@ -66,11 +66,11 @@ pub fn get_pyth_price(
     let mut price_calculator = PriceCalculator::new(1, 0)?;
     let price_key = price_info.key.to_string();
     if price_key == relend_program::REBTC {
-        price_calculator = PriceCalculator::new(30_068, 0)?;
+        price_calculator = PriceCalculator::new(29_976, 0)?;
     } else if price_key == relend_program::REETH {
-        price_calculator = PriceCalculator::new(163393, -2)?;
+        price_calculator = PriceCalculator::new(166293, -2)?;
     } else if price_key == relend_program::RENEC {
-        price_calculator = PriceCalculator::new(3029, -4)?;
+        price_calculator = PriceCalculator::new(3020, -4)?;
     } 
 
     let market_price = price_calculator_to_decimal(&price_calculator);
