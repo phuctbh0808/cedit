@@ -127,16 +127,16 @@ program
     let oraclePrice = "";
     switch (tokenCase) {
       case caseBTC:
-        oracleProduct = "4kn3JeaXhBbbwKF3kaYubiWHVCxkJdJap6zsm54CS4YQ";
-        oraclePrice = "EWMPWwzt5wFWmtsYhEvGxZ8EvEsPp9Fm5rfQBwoXR3Nz";
+        oracleProduct = "5Vqgme5Zg8wS9gLd5gzAuqo5JdxC5ynM57XhqcBVzx2H";
+        oraclePrice = "F7jKoXmoBGrTvEPj2PaD4XQc835ZQAu2eXWSNAGCzJUu";
         break;
       case caseETH:
-        oracleProduct = "BKcFo4FD6jSjttHdfwPGuBVZWhZXfSCU6KEFJhhTija1";
-        oraclePrice = "CeVUAv8Fk7XfyVefBSZvpQZMMdkBanL4k4jLNCCjwrNC";
+        oracleProduct = "5cV9gxkqE7XMova8ivSykei1zZCn9th1KdJpxf3PUJ5M";
+        oraclePrice = "8Qia1nicPBG4TwksAVvzXn2GA5iosB3Q51zA121Xk4Bj";
         break;
       case caseRenec:
-        oracleProduct = "8jMh1d8NA84AZErW2uZ71Jbhci3PyV3WaySbVVLXGctt";
-        oraclePrice = "nakiaURmuNcNS1nUwJzqKWU1x9CPXXfK4xVSK1utcL7";
+        oracleProduct = "F6dpHV5GxqqcuJ1gfEU4AADQ5fUFZ1wFPbLcPMF4XPnQ";
+        oraclePrice = "GKQkHhzpDqyQ3AKaoo3ADcFjV6oFLv7Xf7Ut4dKyxtHj";
         break;
       case caseUSD:
         oracleProduct = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
@@ -202,7 +202,7 @@ program
         return;
       }
 
-      console.log("Wrap RENEC to spl token so that it can be used as supply token");
+      console.log("Wrap RENEC to rpl token so that it can be used as supply token");
       const ata = await getOrCreateAssociatedTokenAccount(
         connection,
         keypair,
