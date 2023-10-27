@@ -4,6 +4,7 @@ const fs = require("fs");
 import { Command } from "commander";
 import * as anchor from "@project-serum/anchor";
 import { exec } from "child_process";
+import path from "path";
 import {
   PublicKey,
   Connection,
@@ -31,7 +32,7 @@ async function getRENECBalance(walletPublicKey: PublicKey, connection: Connectio
     const balance = await connection.getBalance(walletPublicKey);
     return balance / LAMPORTS_PER_SOL; // Add return statement
   } catch (error) {
-    console.error('Error checking RENEC balance:', error);
+    console.error("Error checking RENEC balance:", error);
     return 0;
   }
 }
@@ -42,7 +43,7 @@ async function getSPLTokenBalance(tokenAccount: PublicKey, connection: Connectio
     const tokenAccountInfo = await connection.getTokenAccountBalance(tokenAccount);
     return tokenAccountInfo.value.uiAmount ?? 0; // Add return statement
   } catch (error) {
-    console.error('Error checking SPL token balance:', error);
+    console.error("Error checking SPL token balance:", error);
     return 0;
   }
 }
@@ -187,22 +188,16 @@ program
       );
 
       const balance = await getSPLTokenBalance(ata.address, connection);
-      if (balance < amount) { 
-        console.log(`Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`);
+      if (balance < amount) {
+        console.log(
+          `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
+        );
         return;
       }
 
       console.log("source owner address: ", sourceOwnerAta);
       sourceOwnerAta = ata.address.toBase58();
     } else {
-      const balance = await getRENECBalance(sourceOwner, connection);
-      const needAmount = amount + 0.01; // 0.01 RENEC for wrapped fee
-      if (balance < needAmount) { 
-        console.log(`Please fund ${needAmount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`);
-        return;
-      }
-
-      console.log("Wrap RENEC to rpl token so that it can be used as supply token");
       const ata = await getOrCreateAssociatedTokenAccount(
         connection,
         keypair,
@@ -210,22 +205,36 @@ program
         sourceOwner,
       );
 
-      console.log(
-        "Transfer RENEC to associated token account and use SyncNative to update wrapped RENEC balance",
-      );
-      const transferAmount = BigInt(Math.ceil(LAMPORTS_PER_SOL * needAmount));
-      const reTransferTransaction = new Transaction().add(
-        SystemProgram.transfer({
-          fromPubkey: sourceOwner,
-          toPubkey: ata.address,
-          lamports: transferAmount, 
-        }),
-        createSyncNativeInstruction(ata.address),
-      );
+      const wbalance = await getSPLTokenBalance(ata.address, connection);
+      if (wbalance < amount) {
+        const balance = await getRENECBalance(sourceOwner, connection);
+        const needAmount = (amount - wbalance) + 0.01; // 0.01 RENEC for wrapped fee
+        if (balance < needAmount) {
+          console.log(
+            `Please fund ${needAmount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
+          );
+          return;
+        }
 
-      await sendAndConfirmTransaction(connection, reTransferTransaction, [keypair]);
+        console.log("Wrap RENEC to rpl token so that it can be used as supply token");
 
-      console.log("End wrapped");
+        console.log(
+          "Transfer RENEC to associated token account and use SyncNative to update wrapped RENEC balance",
+        );
+        const transferAmount = BigInt(Math.ceil(LAMPORTS_PER_SOL * needAmount));
+        const reTransferTransaction = new Transaction().add(
+          SystemProgram.transfer({
+            fromPubkey: sourceOwner,
+            toPubkey: ata.address,
+            lamports: transferAmount,
+          }),
+          createSyncNativeInstruction(ata.address),
+        );
+
+        await sendAndConfirmTransaction(connection, reTransferTransaction, [keypair]);
+        console.log("End wrapped");
+      }
+
       sourceOwnerAta = ata.address.toBase58();
     }
 
@@ -259,8 +268,10 @@ program
       "--verbose",
     ];
 
+    const currentExeDir = path.join(__dirname, "..");
+    console.log("Execution folder: ", currentExeDir);
     let exeCmd =
-      `RUST_BACKTRACE=1 target/debug/relend-program --program ${program_id} add-reserve ` +
+      `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} add-reserve ` +
       exeParams.join(" ");
     exec(exeCmd, (error, stdout, stderr) => {
       if (error) {
