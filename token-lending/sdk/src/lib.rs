@@ -29,11 +29,11 @@ pub const NULL_PUBKEY: solana_program::pubkey::Pubkey =
     ]);
 
 /// RENEC price oracle pubkey
-pub const RENEC: &str = "nakiaURmuNcNS1nUwJzqKWU1x9CPXXfK4xVSK1utcL7";
+pub const RENEC: &str = "GKQkHhzpDqyQ3AKaoo3ADcFjV6oFLv7Xf7Ut4dKyxtHj";
 /// reBTC price oracle pubkey
-pub const REBTC: &str = "EWMPWwzt5wFWmtsYhEvGxZ8EvEsPp9Fm5rfQBwoXR3Nz";
+pub const REBTC: &str = "F7jKoXmoBGrTvEPj2PaD4XQc835ZQAu2eXWSNAGCzJUu";
 /// reETH price oracle pubkey
-pub const REETH: &str = "CeVUAv8Fk7XfyVefBSZvpQZMMdkBanL4k4jLNCCjwrNC";
+pub const REETH: &str = "8Qia1nicPBG4TwksAVvzXn2GA5iosB3Q51zA121Xk4Bj";
 
 /// Mainnet program id for Switchboard v2.
 pub mod switchboard_v2_mainnet {
