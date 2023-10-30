@@ -239,8 +239,9 @@ program
     }
 
     const exeParams = [
+      `--fee-payer ${payer}`,
       `--market-owner ${market_owner}`,
-      `--source-owner ${payer}`,
+      `--source-owner ${payer}r`,
       `--market ${market_addr}`,
       `--source ${sourceOwnerAta}`,
       `--amount ${amount}`,
@@ -273,7 +274,7 @@ program
     let exeCmd =
       `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} add-reserve ` +
       exeParams.join(" ");
-    exec(exeCmd, (error, stdout, stderr) => {
+    exec(exeCmd, { shell: '/bin/bash' }, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error: ${error.message}`);
       }
