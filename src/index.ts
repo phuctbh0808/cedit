@@ -241,7 +241,7 @@ program
     const exeParams = [
       `--fee-payer ${payer}`,
       `--market-owner ${market_owner}`,
-      `--source-owner ${payer}r`,
+      `--source-owner ${payer}`,
       `--market ${market_addr}`,
       `--source ${sourceOwnerAta}`,
       `--amount ${amount}`,
