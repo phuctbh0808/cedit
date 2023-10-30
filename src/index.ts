@@ -208,7 +208,7 @@ program
       const wbalance = await getSPLTokenBalance(ata.address, connection);
       if (wbalance < amount) {
         const balance = await getRENECBalance(sourceOwner, connection);
-        const needAmount = (amount - wbalance) + 0.01; // 0.01 RENEC for wrapped fee
+        const needAmount = amount - wbalance + 0.01; // 0.01 RENEC for wrapped fee
         if (balance < needAmount) {
           console.log(
             `Please fund ${needAmount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
@@ -276,13 +276,9 @@ program
     exec(exeCmd, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error: ${error.message}`);
-        return;
       }
-      if (stderr) {
-        console.error(stderr);
-        return;
-      }
-      console.log(stdout);
+      console.error("stderr: ", stderr);
+      console.log("stdout: ", stdout);
     });
   });
 
