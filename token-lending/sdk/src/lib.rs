@@ -28,12 +28,9 @@ pub const NULL_PUBKEY: solana_program::pubkey::Pubkey =
         138, 64, 177, 28, 19, 90, 156, 0, 0, 0, 0, 0,
     ]);
 
-/// RENEC price oracle pubkey
-pub const RENEC: &str = "GKQkHhzpDqyQ3AKaoo3ADcFjV6oFLv7Xf7Ut4dKyxtHj";
-/// reBTC price oracle pubkey
-pub const REBTC: &str = "F7jKoXmoBGrTvEPj2PaD4XQc835ZQAu2eXWSNAGCzJUu";
-/// reETH price oracle pubkey
-pub const REETH: &str = "8Qia1nicPBG4TwksAVvzXn2GA5iosB3Q51zA121Xk4Bj";
+
+/// reUSD price oracle pubkey
+pub const REUSD: &str = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
 
 /// Mainnet program id for Switchboard v2.
 pub mod switchboard_v2_mainnet {
