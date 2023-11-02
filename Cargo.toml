@@ -3,6 +3,7 @@ members = [
   "token-lending/program",
   "token-lending/sdk",
   "token-lending/cli",
+  "programs/*",
 ]
 
 [profile.dev]

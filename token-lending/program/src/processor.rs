@@ -14,6 +14,7 @@ use crate::{
     },
 };
 use bytemuck::bytes_of;
+use relend_sdk::state::{LendingMarketMetadata, RateLimiter, RateLimiterConfig, ReserveType};
 use solana_program::{
     account_info::{next_account_info, AccountInfo},
     entrypoint::ProgramResult,
@@ -31,9 +32,8 @@ use solana_program::{
         Sysvar,
     },
 };
-use relend_sdk::state::{LendingMarketMetadata, RateLimiter, RateLimiterConfig, ReserveType};
 use spl_token::state::Mint;
-use std::{cmp::min, result::Result, convert::TryFrom};
+use std::{cmp::min, convert::TryFrom, result::Result};
 
 /// relend market owner
 pub mod relend_market_owner {
@@ -347,8 +347,12 @@ fn process_init_reserve(
     validate_pyth_keys(&lending_market, pyth_product_info, pyth_price_info)?;
     validate_switchboard_keys(&lending_market, switchboard_feed_info)?;
 
-    let (market_price, smoothed_market_price) =
-        get_price(Some(switchboard_feed_info), pyth_price_info, pyth_product_info, clock)?;
+    let (market_price, smoothed_market_price) = get_price(
+        Some(switchboard_feed_info),
+        pyth_price_info,
+        pyth_product_info,
+        clock,
+    )?;
 
     let authority_signer_seeds = &[
         lending_market_info.key.as_ref(),
@@ -488,6 +492,16 @@ fn _refresh_reserve<'a>(
     clock: &Clock,
 ) -> ProgramResult {
     let mut reserve = Reserve::unpack(&reserve_info.data.borrow())?;
+    msg!(
+        "Reserve mint address: {}",
+        &reserve.liquidity.mint_pubkey.to_string()
+    );
+    msg!(
+        "Reserve oracle pubkey: {}",
+        &reserve.liquidity.oracle_pubkey
+    );
+    msg!("Pyth price pubkey: {}", &pyth_price_info.key.to_string());
+
     if reserve_info.owner != program_id {
         msg!("Reserve provided is not owned by the lending program");
         return Err(LendingError::InvalidAccountOwner.into());
@@ -498,16 +512,21 @@ fn _refresh_reserve<'a>(
     }
     // the first check is to allow for the only passing in pyth case
     // TODO maybe change this to is_some_and later
-    if switchboard_feed_info.is_some()
-        && &reserve.liquidity.second_oracle_pubkey != switchboard_feed_info.unwrap().key
-    {
-        msg!("Reserve liquidity switchboard oracle does not match the reserve liquidity switchboard oracle provided");
-        return Err(LendingError::InvalidOracleConfig.into());
-    }
+    // if switchboard_feed_info.is_some()
+    //     && &reserve.liquidity.second_oracle_pubkey != switchboard_feed_info.unwrap().key
+    // {
+    //     msg!("Reserve liquidity switchboard oracle does not match the reserve liquidity switchboard oracle provided");
+    //     return Err(LendingError::InvalidOracleConfig.into());
+    // }
 
-    let (market_price, smoothed_market_price) =
-        get_price(switchboard_feed_info, pyth_price_info, pyth_product_info, clock)?;
-
+    let (market_price, smoothed_market_price) = get_price(
+        switchboard_feed_info,
+        pyth_price_info,
+        pyth_product_info,
+        clock,
+    )?;
+    msg!("Market price: {}", market_price);
+    msg!("Smoothed market price: {:?}", smoothed_market_price);
     reserve.liquidity.market_price = market_price;
 
     if let Some(smoothed_market_price) = smoothed_market_price {
@@ -2941,10 +2960,10 @@ fn unpack_mint(data: &[u8]) -> Result<Mint, LendingError> {
 fn get_price(
     switchboard_feed_info: Option<&AccountInfo>,
     pyth_price_account_info: &AccountInfo,
-    price_product_info: &AccountInfo,
+    pyth_product_account_info: &AccountInfo,
     clock: &Clock,
 ) -> Result<(Decimal, Option<Decimal>), ProgramError> {
-    if let Ok(prices) = get_pyth_price(pyth_price_account_info, price_product_info, clock) {
+    if let Ok(prices) = get_pyth_price(pyth_price_account_info, pyth_product_account_info, clock) {
         return Ok((prices.0, Some(prices.1)));
     }
 
@@ -2962,8 +2981,8 @@ fn get_price(
 }
 
 fn get_switchboard_price(
-    switchboard_feed_info: &AccountInfo,
-    clock: &Clock,
+    _switchboard_feed_info: &AccountInfo,
+    _clock: &Clock,
 ) -> Result<Decimal, ProgramError> {
     // const STALE_AFTER_SLOTS_ELAPSED: u64 = 240;
 
@@ -3008,7 +3027,6 @@ fn get_switchboard_price(
 
     Ok(Decimal::from(u64::try_from(25630).unwrap()))
 }
-
 
 /// Issue a spl_token `InitializeAccount` instruction.
 #[inline(always)]
@@ -3146,9 +3164,9 @@ fn spl_token_burn(params: TokenBurnParams<'_, '_>) -> ProgramResult {
 /// validates pyth AccountInfos
 #[inline(always)]
 fn validate_pyth_keys(
-    lending_market: &LendingMarket,
-    pyth_product_info: &AccountInfo,
-    pyth_price_info: &AccountInfo,
+    _lending_market: &LendingMarket,
+    _pyth_product_info: &AccountInfo,
+    _pyth_price_info: &AccountInfo,
 ) -> ProgramResult {
     // if *pyth_price_info.key == relend_program::NULL_PUBKEY {
     //     return Ok(());
@@ -3180,8 +3198,8 @@ fn validate_pyth_keys(
 
 /// validates switchboard AccountInfo
 fn validate_switchboard_keys(
-    lending_market: &LendingMarket,
-    switchboard_feed_info: &AccountInfo,
+    _lending_market: &LendingMarket,
+    _switchboard_feed_info: &AccountInfo,
 ) -> ProgramResult {
     // if *switchboard_feed_info.key == relend_program::NULL_PUBKEY {
     //     return Ok(());

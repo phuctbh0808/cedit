@@ -28,6 +28,10 @@ pub const NULL_PUBKEY: solana_program::pubkey::Pubkey =
         138, 64, 177, 28, 19, 90, 156, 0, 0, 0, 0, 0,
     ]);
 
+
+/// reUSD price oracle pubkey
+pub const REUSD: &str = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
+
 /// Mainnet program id for Switchboard v2.
 pub mod switchboard_v2_mainnet {
     solana_program::declare_id!("SW1TCH7qEPTdLsDHRgPuMQjbQxKdH2aBStViMFnt64f");

@@ -6,7 +6,7 @@ mod lending_market_metadata;
 mod obligation;
 mod rate_limiter;
 mod reserve;
-mod price;
+mod pirce;
 
 pub use last_update::*;
 pub use lending_market::*;
@@ -14,7 +14,7 @@ pub use lending_market_metadata::*;
 pub use obligation::*;
 pub use rate_limiter::*;
 pub use reserve::*;
-pub use price::*;
+pub use pirce::*;
 
 use crate::math::{Decimal, WAD};
 use solana_program::{msg, program_error::ProgramError};
