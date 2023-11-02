@@ -2,7 +2,7 @@
 use crate::{
     self as relend_program,
     error::LendingError,
-    math::{Decimal, TryDiv, TryMul},
+    math::{Decimal, TryDiv},
     state::{Price, PriceStatus, Product, ProductStatus},
 };
 use anchor_lang::require;
@@ -38,10 +38,18 @@ pub fn get_pyth_price(
     msg!("price_key: {}", price_key);
 
     if price_key != relend_program::REUSD {
+        msg!("It is not reUSD");
         const STALE_AFTER_SLOTS_ELAPSED: u64 = 60;
 
-        let mut oracle_product_data: &[u8] = &price_product.try_borrow_data()?;
-        let oracle_product_info: Product = BorshDeserialize::deserialize(&mut oracle_product_data)?;
+        let product_data: &[u8] = &price_product.try_borrow_data()?;
+        let mut oracle_product_data: &[u8] = &product_data[8..];
+        let oracle_product_info: Product = BorshDeserialize::deserialize(&mut oracle_product_data)
+            .unwrap_or_else(|error| {
+                msg!("Product deserialize error: {:?}", error);
+                Product::default()
+            });
+
+        msg!("oracle_product_info: {:?}", oracle_product_info);
         require!(
             oracle_product_info.price_account.eq(&price_info.key),
             LendingError::InvalidPriceOfProductOracle
@@ -56,8 +64,13 @@ pub fn get_pyth_price(
             LendingError::UnavailableProduct
         );
 
-        let mut oracle_price_data: &[u8] = &price_info.try_borrow_data()?;
-        let oracle_price_info: Price = BorshDeserialize::deserialize(&mut oracle_price_data)?;
+        let price_data: &[u8] = &price_info.try_borrow_data()?;
+        let mut oracle_price_data: &[u8] = &price_data[8..];
+        let oracle_price_info: Price = BorshDeserialize::deserialize(&mut oracle_price_data)
+            .unwrap_or_else(|error| {
+                msg!("Price deserialize error: {:?}", error);
+                Price::default()
+            });
 
         require!(
             oracle_price_info.status == PriceStatus::Online,

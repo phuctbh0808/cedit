@@ -24,3 +24,6 @@ deploy: set-cluster-url
 
 init-market:
 	@./scripts/init-market.sh "$(program_id)" "$(owner)" "$(payer)"
+
+update-reserve:
+	@./scripts/update-reserve.sh "$(program_id)" "$(owner)" "$(market)" "$(reserve)" "$(borrow_fee)"
