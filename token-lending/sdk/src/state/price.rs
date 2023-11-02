@@ -11,6 +11,12 @@ pub enum AssetType {
     Crypto,
 }
 
+impl Default for AssetType {
+    fn default() -> Self {
+        AssetType::Crypto
+    }
+}
+
 #[derive(BorshDeserialize, Debug, PartialEq)]
 /// Product Status
 pub enum ProductStatus {
@@ -22,7 +28,14 @@ pub enum ProductStatus {
     Online,
 }
 
-#[derive(BorshDeserialize, Debug)]
+impl Default for ProductStatus {
+    fn default() -> Self {
+        ProductStatus::Unknown
+    }
+}
+
+// #[account]
+#[derive(BorshDeserialize, Debug, Default)]
 /// Product
 pub struct Product {
     /// Version
@@ -68,7 +81,13 @@ pub enum PriceStatus {
     Online,
 }
 
-#[derive(BorshDeserialize, Debug)]
+impl Default for PriceStatus {
+    fn default() -> Self {
+        PriceStatus::Unknown
+    }
+}
+
+#[derive(BorshDeserialize, Debug, Default)]
 /// Price
 pub struct Price {
     /// Version

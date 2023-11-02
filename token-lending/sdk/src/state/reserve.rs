@@ -14,7 +14,7 @@ use solana_program::{
     program_pack::{IsInitialized, Pack, Sealed},
     pubkey::{Pubkey, PUBKEY_BYTES},
 };
-use std::str::FromStr;
+use std::{str::FromStr, fmt::{Debug, self, Formatter}};
 use std::{
     cmp::{max, min, Ordering},
     convert::{TryFrom, TryInto},
@@ -126,7 +126,13 @@ impl Reserve {
             self.liquidity.market_price,
             self.liquidity.smoothed_market_price,
         );
-
+        msg!("market price: {}", self.liquidity.market_price);
+        msg!(
+            "smoothed market price: {}",
+            self.liquidity.smoothed_market_price
+        );
+        msg!("price upper bound: {}", price_upper_bound);
+        msg!("liquidity amount: {}", liquidity_amount);
         price_upper_bound
             .try_mul(liquidity_amount)?
             .try_div(Decimal::from(
@@ -263,6 +269,9 @@ impl Reserve {
         let decimals = 10u64
             .checked_pow(self.liquidity.mint_decimals as u32)
             .ok_or(LendingError::MathOverflow)?;
+        msg!("decimals: {}", decimals);
+        msg!("mint decimals: {}", self.liquidity.mint_decimals);
+        msg!("amount to borrow: {}", amount_to_borrow);
         if amount_to_borrow == u64::MAX {
             let borrow_amount = max_borrow_value
                 .try_mul(decimals)?
@@ -297,9 +306,13 @@ impl Reserve {
                 .calculate_borrow_fees(borrow_amount, FeeCalculation::Exclusive)?;
 
             let borrow_amount = borrow_amount.try_add(borrow_fee.into())?;
-            let borrow_value = self
-                .market_value_upper_bound(borrow_amount)?
-                .try_mul(self.borrow_weight())?;
+            let mut borrow_value = self.market_value_upper_bound(borrow_amount)?;
+            msg!("borrow value upper bound: {}", borrow_value);
+            borrow_value = borrow_value.try_mul(self.borrow_weight())?;
+
+            msg!("borrow weight: {}", self.borrow_weight());
+            msg!("borrow value: {}", borrow_value);
+            msg!("max borrow value: {}", max_borrow_value);
             if borrow_value > max_borrow_value {
                 msg!("Borrow value cannot exceed maximum borrow value");
                 return Err(LendingError::BorrowTooLarge.into());
@@ -1072,6 +1085,12 @@ impl ReserveFees {
     ) -> Result<(u64, u64), ProgramError> {
         let borrow_fee_rate = Rate::from_scaled_val(fee_wad);
         let host_fee_rate = Rate::from_percent(self.host_fee_percentage);
+        msg!(
+            "borrow_fee_rate: {}, host_fee_rate: {}",
+            borrow_fee_rate,
+            host_fee_rate
+        );
+        msg!("fee wad: {}", fee_wad);
         if borrow_fee_rate > Rate::zero() && amount > Decimal::zero() {
             let need_to_assess_host_fee = host_fee_rate > Rate::zero();
             let minimum_fee = if need_to_assess_host_fee {
@@ -1079,6 +1098,7 @@ impl ReserveFees {
             } else {
                 1u64 // 1 token to owner, nothing else
             };
+            msg!("fee calculation: {:?}", fee_calculation);
 
             let borrow_fee_amount = match fee_calculation {
                 // Calculate fee to be added to borrow: fee = amount * rate
@@ -1087,11 +1107,15 @@ impl ReserveFees {
                 FeeCalculation::Inclusive => {
                     let borrow_fee_rate =
                         borrow_fee_rate.try_div(borrow_fee_rate.try_add(Rate::one())?)?;
+
+                    msg!("borrow_fee_rate inclusive: {}", borrow_fee_rate);
                     amount.try_mul(borrow_fee_rate)?
                 }
             };
-
+            msg!("borrow_fee_amount: {}", borrow_fee_amount);
+            msg!("minimum_fee: {}", minimum_fee);
             let borrow_fee_decimal = borrow_fee_amount.max(minimum_fee.into());
+            msg!("borrow_fee_decimal: {}", borrow_fee_decimal);
             if borrow_fee_decimal >= amount {
                 msg!("Borrow amount is too small to receive liquidity after fees");
                 return Err(LendingError::BorrowTooSmall.into());
@@ -1120,6 +1144,15 @@ pub enum FeeCalculation {
     Exclusive,
     /// Fee included in amount: fee = (rate / (1 + rate)) * amount
     Inclusive,
+}
+
+impl Debug for FeeCalculation {
+    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
+        match self {
+            FeeCalculation::Exclusive => write!(f, "Exclusive"),
+            FeeCalculation::Inclusive => write!(f, "Inclusive"),
+        }
+    }
 }
 
 impl Sealed for Reserve {}
@@ -1412,9 +1445,7 @@ impl Pack for Reserve {
                 mint_decimals: u8::from_le_bytes(*liquidity_mint_decimals),
                 supply_pubkey: Pubkey::new_from_array(*liquidity_supply_pubkey),
                 oracle_pubkey: Pubkey::new_from_array(*liquidity_oracle_pubkey),
-                second_oracle_pubkey: Pubkey::new_from_array(
-                    *liquidity_second_oracle_pubkey,
-                ),
+                second_oracle_pubkey: Pubkey::new_from_array(*liquidity_second_oracle_pubkey),
                 available_amount: u64::from_le_bytes(*liquidity_available_amount),
                 borrowed_amount_wads: unpack_decimal(liquidity_borrowed_amount_wads),
                 cumulative_borrow_rate_wads: unpack_decimal(liquidity_cumulative_borrow_rate_wads),
