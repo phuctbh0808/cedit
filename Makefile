@@ -26,4 +26,4 @@ init-market:
 	@./scripts/init-market.sh "$(program_id)" "$(owner)" "$(payer)"
 
 update-reserve:
-	@./scripts/update-reserve.sh "$(program_id)" "$(owner)" "$(payer)" "$(market)" "$(reserve)" "$(borrow_fee)"
+	@./scripts/update-reserve.sh "$(program_id)" "$(owner)" "$(market)" "$(reserve)" "$(borrow_fee)"
