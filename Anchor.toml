@@ -1,0 +1,12 @@
+[programs.localnet]
+relend_program = "LP17qXm5XnefkyVzkJa8gLcKXnjmsjX3YQCdB18Dsku"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/solana/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
