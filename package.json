@@ -15,7 +15,9 @@
     "dotenv": "^16.3.1",
     "figlet": "^1.6.0",
     "nodemon": "^3.0.1",
-    "spl-token": "npm:@solana/spl-token@0.2.0"
+    "relend-adapter": "^0.0.60",
+    "spl-token": "npm:@solana/spl-token@0.2.0",
+    "bignumber.js": "^9.0.2"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",

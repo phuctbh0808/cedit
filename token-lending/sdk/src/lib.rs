@@ -31,6 +31,8 @@ pub const NULL_PUBKEY: solana_program::pubkey::Pubkey =
 
 /// reUSD price oracle pubkey
 pub const REUSD: &str = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
+/// reUSD/reVND price oracle pubkey
+pub const REUSD_REVND: &str = "Hf2adYGtFBBiraDGU2AzvXaEjmxTPDRH2uuGzdprjmCh";
 
 /// Mainnet program id for Switchboard v2.
 pub mod switchboard_v2_mainnet {

@@ -35,7 +35,6 @@ pub fn get_pyth_price(
     // Default price will be 1 which apply for all stable coin
     let mut price_calculator = PriceCalculator::new(1000000, -6)?;
     let price_key = price_info.key.to_string();
-    msg!("price_key: {}", price_key);
 
     if price_key != relend_program::REUSD {
         msg!("It is not reUSD");
@@ -49,7 +48,6 @@ pub fn get_pyth_price(
                 Product::default()
             });
 
-        msg!("oracle_product_info: {:?}", oracle_product_info);
         require!(
             oracle_product_info.price_account.eq(&price_info.key),
             LendingError::InvalidPriceOfProductOracle
@@ -84,10 +82,11 @@ pub fn get_pyth_price(
             LendingError::PriceTooOld
         );
 
+        // 24_500_000_000, expo = -6
         price_calculator = PriceCalculator::new(oracle_price_info.price, oracle_product_info.expo)?;
     }
 
-    let market_price = price_calculator_to_decimal(&price_calculator);
+    let market_price = price_calculator_to_decimal(&price_calculator, price_key == relend_program::REUSD_REVND);
     let ema_price = market_price.clone()?;
 
     Ok((market_price?, ema_price))
@@ -97,13 +96,11 @@ fn to_timestamp_u64(t: i64) -> Result<u64, LendingError> {
     u64::try_from(t).or(Err(LendingError::InvalidTimestampConversion))
 }
 
-fn price_calculator_to_decimal(pyth_price: &PriceCalculator) -> Result<Decimal, ProgramError> {
+fn price_calculator_to_decimal(pyth_price: &PriceCalculator, is_reverse: bool) -> Result<Decimal, ProgramError> {
     let price: u64 = pyth_price.price.try_into().map_err(|_| {
         msg!("Oracle price cannot be negative");
         LendingError::InvalidOracleConfig
     })?;
-
-    msg!("price: {}", price);
 
     let exponent = pyth_price
         .expo
@@ -111,12 +108,15 @@ fn price_calculator_to_decimal(pyth_price: &PriceCalculator) -> Result<Decimal, 
         .ok_or(LendingError::MathOverflow)?
         .try_into()
         .map_err(|_| LendingError::MathOverflow)?;
-    msg!("exponent: {}", exponent);
     let decimals = 10u64
         .checked_pow(exponent)
         .ok_or(LendingError::MathOverflow)?;
-    msg!("decimals: {}", decimals);
-    Decimal::from(price).try_div(decimals)
+    if is_reverse {
+        msg!("Get reverse price");
+        Decimal::from(decimals).try_div(price)
+    } else {
+        Decimal::from(price).try_div(decimals)
+    }
 }
 
 // #[cfg(test)]

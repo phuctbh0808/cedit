@@ -19,6 +19,9 @@ import {
   createSyncNativeInstruction,
   NATIVE_MINT,
 } from "spl-token";
+import { BN } from "bn.js";
+import { RelendAction, RelendMarket } from "relend-adapter";
+import BigNumber from "bignumber.js";
 
 const program = new Command();
 
@@ -47,6 +50,147 @@ async function getSPLTokenBalance(tokenAccount: PublicKey, connection: Connectio
     return 0;
   }
 }
+
+program
+  .command("supply")
+  .description("Supply token for seperate reserve")
+  .option("--supplier <string>", "")
+  .option("--amount <number>", "")
+  .option("--token_sympol <string>", "Token symbol: reVND, reUSD")
+  .option("--cluster <string>", "")
+  .option("--network_url <string>", "")
+  .option("--market_addr <string>", "Market address")
+  .action(async (params) => {
+    let { supplier, amount, token_sympol, cluster, network_url, market_addr } = params;
+
+    let reUSD = new PublicKey("USDbgSB1DPBCEDt15ppgTZZYiQokMHcvkX6JQRfVNJY");
+    let reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
+    if (cluster == "mainnet") {
+      reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
+      reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
+    }
+    let tokenProgramId = reUSD;
+    let decimals = 0;
+    switch (token_sympol.toUpperCase()) {
+      case "REUSD":
+        tokenProgramId = reUSD;
+        decimals = 9;
+        break;
+      case "REVND":
+        tokenProgramId = reVND;
+        decimals = 0;
+        break;
+      default:
+        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        return;
+    }
+    console.log("Start to supply token for reserve");
+    console.log("params:", params);
+    amount = parseFloat(amount);
+    console.log("Deposit amount: ", amount);
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(supplier));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    let sourceOwner = keypair.publicKey;
+    console.log("Check if source owner has enough balance");
+    const ata = await getOrCreateAssociatedTokenAccount(
+      connection,
+      keypair,
+      tokenProgramId,
+      sourceOwner,
+    );
+
+    const balance = await getSPLTokenBalance(ata.address, connection);
+    if (balance < amount) {
+      console.log(
+        `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
+      );
+      return;
+    }
+
+    const depositAmount = new BigNumber(amount).shiftedBy(decimals).toFixed(0);
+    console.log("IS_MAINENT ", process.env.NEXT_PUBLIC_IS_MAINNET);
+    console.log("Building supply txns...");
+    const env = cluster == "mainnet" ? "production" : "testnet";
+    const relendAction = await RelendAction.buildDepositTxns(
+      connection,
+      depositAmount,
+      token_sympol,
+      keypair.publicKey,
+      env,
+      new PublicKey(market_addr),
+    );
+    const sendTransaction = async (txn: Transaction, connection: Connection) => {
+      const { blockhash } = await connection.getLatestBlockhash();
+      txn.recentBlockhash = blockhash;
+      txn.feePayer = keypair.publicKey;
+      txn.sign(keypair);
+      return connection.sendRawTransaction(txn.serialize());
+    };
+    console.log("Sending supply txns...");
+    const txHash = await relendAction.sendTransactions(sendTransaction);
+    console.log("Confirming supply txns...");
+    await connection.confirmTransaction(txHash, "finalized");
+    console.log("Supply txHash: ", txHash);
+    console.log("Fetching supply obligation...");
+    const market = await RelendMarket.initialize(connection, env as any);
+    const obligation = await market.fetchObligationByWallet(keypair.publicKey);
+    console.log(obligation);
+  });
+
+program
+  .command("withdraw")
+  .description("Withdraw collateral from seperate reserve")
+  .option("--supplier <string>", "")
+  .option("--amount <number>", "")
+  .option("--token_sympol <string>", "Token symbol: reUSD, reVND")
+  .option("--cluster <string>", "")
+  .option("--network_url <string>", "")
+  .option("--market_addr <string>", "Market address")
+  .action(async (params) => {
+    let { supplier, amount, token_sympol, cluster, network_url, market_addr } = params;
+
+    console.log("Start to withdraw collaterals from reserve");
+    console.log("params:", params);
+    amount = parseFloat(amount);
+    let decimals = 0;
+    switch (token_sympol.toUpperCase()) {
+      case "REUSD":
+        decimals = 9;
+        break;
+      case "REVND":
+        decimals = 0;
+        break;
+      default:
+        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        return;
+    }
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(supplier));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const withdrawAmount = new BigNumber(amount).shiftedBy(decimals).toFixed(0);
+    console.log("Building withdraw txns...");
+    const relendAction = await RelendAction.buildWithdrawTxns(
+      connection,
+      withdrawAmount,
+      token_sympol,
+      keypair.publicKey,
+      cluster,
+      new PublicKey(market_addr),
+    );
+    const sendTransaction = async (txn: Transaction, connection: Connection) => {
+      const { blockhash } = await connection.getLatestBlockhash();
+      txn.recentBlockhash = blockhash;
+      txn.feePayer = keypair.publicKey;
+      txn.sign(keypair);
+      return connection.sendRawTransaction(txn.serialize());
+    };
+    console.log("Sending withdraw txns...");
+    const txHash = await relendAction.sendTransactions(sendTransaction);
+    console.log("Confirming withdraw txns...");
+    await connection.confirmTransaction(txHash, "finalized");
+    console.log("Withdraw txHash: ", txHash);
+  });
 
 program
   .command("add-reserve")
@@ -108,20 +252,24 @@ program
     let reUSD = new PublicKey("USDbgSB1DPBCEDt15ppgTZZYiQokMHcvkX6JQRfVNJY");
     let reBTC = new PublicKey("BTCxWeEcT5sYsys7ncnr2bU1Mzbn1aXXqJDv43X22cDy");
     let reETH = new PublicKey("ETH6nBodGWYQxz5qZ6C94E4DdQuH5iGTSwdhLHgiLzRy");
+    let reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
       reBTC = new PublicKey("GwPQTMg3eMVpDTEE3daZDtGsBtNHBK3X47dbBJvXUzF4");
       reETH = new PublicKey("GwGh3b7iNibT3gpGn6SwZA9xZme7Th4NZmuGVD75jpZL");
+      reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
     }
 
     const caseUSD = "reusdmainnet";
     const caseBTC = "rebtcmainnet";
     const caseETH = "reethmainnet";
     const caseRenec = "renecmainnet";
+    const caseVND = "revndmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
     const caseETH_test = "reethtestnet";
     const caseRenec_test = "renectestnet";
+    const caseVND_test = "revndtestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
     let oracleProduct = "";
@@ -143,6 +291,10 @@ program
         oracleProduct = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
         oraclePrice = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
         break;
+      case caseVND:
+        oracleProduct = "B8C5ZttE6M3RhF533xSgXQv6zsKkBwRodBoqdahu85JQ";
+        oraclePrice = "Hf2adYGtFBBiraDGU2AzvXaEjmxTPDRH2uuGzdprjmCh";
+        break;
       case caseBTC_test:
         oracleProduct = "4kn3JeaXhBbbwKF3kaYubiWHVCxkJdJap6zsm54CS4YQ";
         oraclePrice = "EWMPWwzt5wFWmtsYhEvGxZ8EvEsPp9Fm5rfQBwoXR3Nz";
@@ -158,6 +310,10 @@ program
       case caseUSD_test:
         oracleProduct = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
         oraclePrice = "4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3";
+        break;
+      case caseVND_test:
+        oracleProduct = "B8C5ZttE6M3RhF533xSgXQv6zsKkBwRodBoqdahu85JQ";
+        oraclePrice = "Hf2adYGtFBBiraDGU2AzvXaEjmxTPDRH2uuGzdprjmCh";
         break;
     }
 
@@ -176,6 +332,9 @@ program
         break;
       case "REETH":
         tokenProgramId = reETH;
+        break;
+      case "REVND":
+        tokenProgramId = reVND;
         break;
     }
 
@@ -274,7 +433,7 @@ program
     let exeCmd =
       `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} add-reserve ` +
       exeParams.join(" ");
-    exec(exeCmd, { shell: '/bin/bash' }, (error, stdout, stderr) => {
+    exec(exeCmd, { shell: "/bin/bash" }, (error, stdout, stderr) => {
       if (error) {
         console.error(`Error: ${error.message}`);
       }

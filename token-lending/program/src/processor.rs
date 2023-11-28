@@ -676,6 +676,7 @@ fn _deposit_reserve_liquidity<'a>(
         return Err(LendingError::InvalidMarketAuthority.into());
     }
 
+    msg!("Depositing {} liquidity", liquidity_amount);
     if Decimal::from(liquidity_amount)
         .try_add(reserve.liquidity.total_supply()?)?
         .try_floor_u64()?

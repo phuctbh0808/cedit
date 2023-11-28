@@ -16,7 +16,14 @@ export CLUSTER_URL := $(if $(filter testnet,$(CLUSTER)),$(RENEC_TESTNET_URL),\
                  $(if $(filter localnet,$(CLUSTER)),$(RENEC_LOCALNET_URL),\
                  $(error Unknown cluster name: $(CLUSTER)))))
 
+export CLI_VERSION := 1.14.6
+export ANCHOR_VERSION := 0.25.0
+
+install-deps: show-network-config
+	@. ./scripts/install-program-deps.sh
+
 build: 
+	@$(MAKE) install-deps CLI_VERSION=$(CLI_VERSION) ANCHOR_VERSION=$(ANCHOR_VERSION)
 	@./scripts/build.sh "$(program_id)"
 
 deploy: set-cluster-url
