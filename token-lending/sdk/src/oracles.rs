@@ -86,10 +86,11 @@ pub fn get_pyth_price(
         price_calculator = PriceCalculator::new(oracle_price_info.price, oracle_product_info.expo)?;
     }
 
-    let market_price = price_calculator_to_decimal(&price_calculator, price_key == relend_program::REUSD_REVND);
-    let ema_price = market_price.clone()?;
+    let market_price = price_calculator_to_decimal(&price_calculator, 
+        price_key == relend_program::REUSD_REVND || price_key == relend_program::REUSD_RENGN)?;
+    let ema_price = market_price.clone();
 
-    Ok((market_price?, ema_price))
+    Ok((market_price, ema_price))
 }
 
 fn to_timestamp_u64(t: i64) -> Result<u64, LendingError> {
