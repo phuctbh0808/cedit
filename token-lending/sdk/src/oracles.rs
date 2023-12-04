@@ -41,6 +41,7 @@ pub fn get_pyth_price(
         const STALE_AFTER_SLOTS_ELAPSED: u64 = 60;
 
         msg!("Product deserializing");
+        msg!("Price product key: {}", price_product.key.to_string());
         let product_data: &[u8] = &price_product.try_borrow_data()?;
         let mut oracle_product_data: &[u8] = &product_data[8..];
         let oracle_product_info: Product = BorshDeserialize::deserialize(&mut oracle_product_data)
