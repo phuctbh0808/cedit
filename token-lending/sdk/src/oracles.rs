@@ -40,8 +40,6 @@ pub fn get_pyth_price(
         msg!("It is not reUSD");
         const STALE_AFTER_SLOTS_ELAPSED: u64 = 60;
 
-        msg!("Product deserializing");
-        msg!("Price product key: {}", price_product.key.to_string());
         let product_data: &[u8] = &price_product.try_borrow_data()?;
         let mut oracle_product_data: &[u8] = &product_data[8..];
         let oracle_product_info: Product = BorshDeserialize::deserialize(&mut oracle_product_data)
@@ -64,7 +62,6 @@ pub fn get_pyth_price(
             LendingError::UnavailableProduct
         );
 
-        msg!("Price deserializing");
         let price_data: &[u8] = &price_info.try_borrow_data()?;
         let mut oracle_price_data: &[u8] = &price_data[8..];
         let oracle_price_info: Price = BorshDeserialize::deserialize(&mut oracle_price_data)
@@ -106,18 +103,15 @@ fn price_calculator_to_decimal(pyth_price: &PriceCalculator, is_reverse: bool) -
         LendingError::InvalidOracleConfig
     })?;
 
-    msg!("Price: {}", price);
     let exponent = pyth_price
         .expo
         .checked_abs()
         .ok_or(LendingError::MathOverflow)?
         .try_into()
         .map_err(|_| LendingError::MathOverflow)?;
-    msg!("Exponent: {}", exponent);
     let decimals = 10u64
         .checked_pow(exponent)
         .ok_or(LendingError::MathOverflow)?;
-    msg!("Decimals: {}", decimals);
     if is_reverse {
         msg!("Get reverse price");
         Decimal::from(decimals).try_div(price)
