@@ -47,7 +47,8 @@ pub fn get_oracle_price(
                 msg!("Product deserialize error: {:?}", error);
                 Product::default()
             });
-
+        
+        msg!("Oracle product info: {:?}", oracle_product_info);
         require!(
             oracle_product_info.price_account.eq(&price_info.key),
             LendingError::InvalidPriceOfProductOracle
@@ -74,7 +75,7 @@ pub fn get_oracle_price(
             oracle_price_info.status == PriceStatus::Online,
             LendingError::UnavailablePriceInfo
         );
-
+        msg!("Oracle price info: {:?}", oracle_price_info);
         let now = to_timestamp_u64(clock.unix_timestamp)?;
         // price must be not older than over 60s
         require!(
@@ -89,7 +90,7 @@ pub fn get_oracle_price(
     let is_reverse_pair = price_key == relend_program::REUSD_REVND || price_key == relend_program::REUSD_RENGN;
     let market_price = price_calculator_to_decimal(&price_calculator, is_reverse_pair);
     let ema_price = market_price.clone()?;
-
+    
     Ok((market_price?, ema_price))
 }
 

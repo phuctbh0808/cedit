@@ -2195,7 +2195,7 @@ fn process_update_reserve_config(
     let lending_market_info = next_account_info(account_info_iter)?;
     let lending_market_authority_info = next_account_info(account_info_iter)?;
     let signer_info = next_account_info(account_info_iter)?;
-    let oracle_product_info = next_account_info(account_info_iter)?;
+    let _oracle_product_info = next_account_info(account_info_iter)?;
     let oracle_price_info = next_account_info(account_info_iter)?;
     let second_oracle_feed_info = next_account_info(account_info_iter)?;
 
