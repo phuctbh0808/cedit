@@ -27,7 +27,7 @@ impl PriceCalculator {
     }
 }
 
-pub fn get_pyth_price(
+pub fn get_oracle_price(
     price_info: &AccountInfo,
     price_product: &AccountInfo,
     clock: &Clock,
