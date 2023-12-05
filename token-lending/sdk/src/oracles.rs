@@ -88,9 +88,11 @@ pub fn get_oracle_price(
     }
 
     let is_reverse_pair = price_key == relend_program::REUSD_REVND || price_key == relend_program::REUSD_RENGN;
+    msg!("Is reverse pair: {}", is_reverse_pair);
     let market_price = price_calculator_to_decimal(&price_calculator, is_reverse_pair);
+    msg!("Market price: {:?}", market_price);
     let ema_price = market_price.clone()?;
-    
+    msg!("EMA price: {:?}", ema_price);
     Ok((market_price?, ema_price))
 }
 
