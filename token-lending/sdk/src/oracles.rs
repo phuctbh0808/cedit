@@ -27,7 +27,7 @@ impl PriceCalculator {
     }
 }
 
-pub fn get_pyth_price(
+pub fn get_oracle_price(
     price_info: &AccountInfo,
     price_product: &AccountInfo,
     clock: &Clock,
@@ -47,7 +47,8 @@ pub fn get_pyth_price(
                 msg!("Product deserialize error: {:?}", error);
                 Product::default()
             });
-
+        
+        msg!("Oracle product info: {:?}", oracle_product_info);
         require!(
             oracle_product_info.price_account.eq(&price_info.key),
             LendingError::InvalidPriceOfProductOracle
@@ -74,7 +75,7 @@ pub fn get_pyth_price(
             oracle_price_info.status == PriceStatus::Online,
             LendingError::UnavailablePriceInfo
         );
-
+        msg!("Oracle price info: {:?}", oracle_price_info);
         let now = to_timestamp_u64(clock.unix_timestamp)?;
         // price must be not older than over 60s
         require!(
@@ -86,9 +87,12 @@ pub fn get_pyth_price(
         price_calculator = PriceCalculator::new(oracle_price_info.price, oracle_product_info.expo)?;
     }
 
-    let market_price = price_calculator_to_decimal(&price_calculator, price_key == relend_program::REUSD_REVND);
+    let is_reverse_pair = price_key == relend_program::REUSD_REVND || price_key == relend_program::REUSD_RENGN;
+    msg!("Is reverse pair: {}", is_reverse_pair);
+    let market_price = price_calculator_to_decimal(&price_calculator, is_reverse_pair);
+    msg!("Market price: {:?}", market_price);
     let ema_price = market_price.clone()?;
-
+    msg!("EMA price: {:?}", ema_price);
     Ok((market_price?, ema_price))
 }
 
@@ -96,21 +100,23 @@ fn to_timestamp_u64(t: i64) -> Result<u64, LendingError> {
     u64::try_from(t).or(Err(LendingError::InvalidTimestampConversion))
 }
 
-fn price_calculator_to_decimal(pyth_price: &PriceCalculator, is_reverse: bool) -> Result<Decimal, ProgramError> {
-    let price: u64 = pyth_price.price.try_into().map_err(|_| {
+fn price_calculator_to_decimal(price_calculator: &PriceCalculator, is_reverse: bool) -> Result<Decimal, ProgramError> {
+    let price: u64 = price_calculator.price.try_into().map_err(|_| {
         msg!("Oracle price cannot be negative");
         LendingError::InvalidOracleConfig
     })?;
 
-    let exponent = pyth_price
+    let exponent = price_calculator
         .expo
         .checked_abs()
         .ok_or(LendingError::MathOverflow)?
         .try_into()
         .map_err(|_| LendingError::MathOverflow)?;
+    msg!("Price: {}, Exponent: {}", price, exponent);
     let decimals = 10u64
         .checked_pow(exponent)
         .ok_or(LendingError::MathOverflow)?;
+    msg!("Decimals: {}", decimals);
     if is_reverse {
         msg!("Get reverse price");
         Decimal::from(decimals).try_div(price)

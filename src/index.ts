@@ -253,11 +253,11 @@ program
     let reBTC = new PublicKey("BTCxWeEcT5sYsys7ncnr2bU1Mzbn1aXXqJDv43X22cDy");
     let reETH = new PublicKey("ETH6nBodGWYQxz5qZ6C94E4DdQuH5iGTSwdhLHgiLzRy");
     let reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
+    let reNGN = new PublicKey("BfSYryW6Q93iUKE4uNsUtAdxQT9uU4GSVg2si3outLk1");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
       reBTC = new PublicKey("GwPQTMg3eMVpDTEE3daZDtGsBtNHBK3X47dbBJvXUzF4");
       reETH = new PublicKey("GwGh3b7iNibT3gpGn6SwZA9xZme7Th4NZmuGVD75jpZL");
-      reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
     }
 
     const caseUSD = "reusdmainnet";
@@ -265,11 +265,13 @@ program
     const caseETH = "reethmainnet";
     const caseRenec = "renecmainnet";
     const caseVND = "revndmainnet";
+    const caseNGN = "rengnmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
     const caseETH_test = "reethtestnet";
     const caseRenec_test = "renectestnet";
     const caseVND_test = "revndtestnet";
+    const caseNGN_test = "rengntestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
     let oracleProduct = "";
@@ -294,6 +296,14 @@ program
       case caseVND:
         oracleProduct = "B8C5ZttE6M3RhF533xSgXQv6zsKkBwRodBoqdahu85JQ";
         oraclePrice = "Hf2adYGtFBBiraDGU2AzvXaEjmxTPDRH2uuGzdprjmCh";
+        break;
+      case caseNGN:
+        oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
+        oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
+        break;
+      case caseNGN_test:
+        oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
+        oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
         break;
       case caseBTC_test:
         oracleProduct = "4kn3JeaXhBbbwKF3kaYubiWHVCxkJdJap6zsm54CS4YQ";
@@ -336,6 +346,9 @@ program
       case "REVND":
         tokenProgramId = reVND;
         break;
+      case "RENGN":
+        tokenProgramId = reNGN;
+        break;``
     }
 
     if (token_sympol.toUpperCase() != "RENEC") {
