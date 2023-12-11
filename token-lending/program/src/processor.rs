@@ -2224,24 +2224,24 @@ fn process_update_reserve_config(
     }
 
     // if it's a permissionless market
-    if &relend_market_owner::id() != signer_info.key {
-        if reserve.config.protocol_liquidation_fee != config.protocol_liquidation_fee {
-            msg!("permissionless markets can't edit protocol liquidation fees");
-            return Err(LendingError::InvalidConfig.into());
-        }
-        if reserve.config.protocol_take_rate != config.protocol_take_rate {
-            msg!("permissionless markets can't edit protocol take rate");
-            return Err(LendingError::InvalidConfig.into());
-        }
-        if reserve.config.fee_receiver != config.fee_receiver {
-            msg!("permissionless markets can't edit fee receiver");
-            return Err(LendingError::InvalidConfig.into());
-        }
-        if reserve.config.fees != config.fees {
-            msg!("permissionless markets can't edit fee configs!");
-            return Err(LendingError::InvalidConfig.into());
-        }
-    }
+    // if &relend_market_owner::id() != signer_info.key {
+    //     if reserve.config.protocol_liquidation_fee != config.protocol_liquidation_fee {
+    //         msg!("permissionless markets can't edit protocol liquidation fees");
+    //         return Err(LendingError::InvalidConfig.into());
+    //     }
+    //     if reserve.config.protocol_take_rate != config.protocol_take_rate {
+    //         msg!("permissionless markets can't edit protocol take rate");
+    //         return Err(LendingError::InvalidConfig.into());
+    //     }
+    //     if reserve.config.fee_receiver != config.fee_receiver {
+    //         msg!("permissionless markets can't edit fee receiver");
+    //         return Err(LendingError::InvalidConfig.into());
+    //     }
+    //     if reserve.config.fees != config.fees {
+    //         msg!("permissionless markets can't edit fee configs!");
+    //         return Err(LendingError::InvalidConfig.into());
+    //     }
+    // }
 
     let authority_signer_seeds = &[
         lending_market_info.key.as_ref(),
