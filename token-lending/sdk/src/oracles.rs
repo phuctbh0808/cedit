@@ -48,7 +48,6 @@ pub fn get_oracle_price(
                 Product::default()
             });
         
-        msg!("Oracle product info: {:?}", oracle_product_info);
         require!(
             oracle_product_info.price_account.eq(&price_info.key),
             LendingError::InvalidPriceOfProductOracle
@@ -75,7 +74,6 @@ pub fn get_oracle_price(
             oracle_price_info.status == PriceStatus::Online,
             LendingError::UnavailablePriceInfo
         );
-        msg!("Oracle price info: {:?}", oracle_price_info);
         let now = to_timestamp_u64(clock.unix_timestamp)?;
         // price must be not older than over 60s
         require!(
@@ -88,11 +86,8 @@ pub fn get_oracle_price(
     }
 
     let is_reverse_pair = price_key == relend_program::REUSD_REVND || price_key == relend_program::REUSD_RENGN;
-    msg!("Is reverse pair: {}", is_reverse_pair);
     let market_price = price_calculator_to_decimal(&price_calculator, is_reverse_pair);
-    msg!("Market price: {:?}", market_price);
     let ema_price = market_price.clone()?;
-    msg!("EMA price: {:?}", ema_price);
     Ok((market_price?, ema_price))
 }
 
@@ -112,11 +107,9 @@ fn price_calculator_to_decimal(price_calculator: &PriceCalculator, is_reverse: b
         .ok_or(LendingError::MathOverflow)?
         .try_into()
         .map_err(|_| LendingError::MathOverflow)?;
-    msg!("Price: {}, Exponent: {}", price, exponent);
     let decimals = 10u64
         .checked_pow(exponent)
         .ok_or(LendingError::MathOverflow)?;
-    msg!("Decimals: {}", decimals);
     if is_reverse {
         msg!("Get reverse price");
         Decimal::from(decimals).try_div(price)
