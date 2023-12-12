@@ -126,13 +126,6 @@ impl Reserve {
             self.liquidity.market_price,
             self.liquidity.smoothed_market_price,
         );
-        msg!("market price: {}", self.liquidity.market_price);
-        msg!(
-            "smoothed market price: {}",
-            self.liquidity.smoothed_market_price
-        );
-        msg!("price upper bound: {}", price_upper_bound);
-        msg!("liquidity amount: {}", liquidity_amount);
         price_upper_bound
             .try_mul(liquidity_amount)?
             .try_div(Decimal::from(
@@ -269,9 +262,6 @@ impl Reserve {
         let decimals = 10u64
             .checked_pow(self.liquidity.mint_decimals as u32)
             .ok_or(LendingError::MathOverflow)?;
-        msg!("decimals: {}", decimals);
-        msg!("mint decimals: {}", self.liquidity.mint_decimals);
-        msg!("amount to borrow: {}", amount_to_borrow);
         if amount_to_borrow == u64::MAX {
             let borrow_amount = max_borrow_value
                 .try_mul(decimals)?
@@ -307,12 +297,8 @@ impl Reserve {
 
             let borrow_amount = borrow_amount.try_add(borrow_fee.into())?;
             let mut borrow_value = self.market_value_upper_bound(borrow_amount)?;
-            msg!("borrow value upper bound: {}", borrow_value);
             borrow_value = borrow_value.try_mul(self.borrow_weight())?;
 
-            msg!("borrow weight: {}", self.borrow_weight());
-            msg!("borrow value: {}", borrow_value);
-            msg!("max borrow value: {}", max_borrow_value);
             if borrow_value > max_borrow_value {
                 msg!("Borrow value cannot exceed maximum borrow value");
                 return Err(LendingError::BorrowTooLarge.into());
