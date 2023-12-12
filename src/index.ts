@@ -455,4 +455,69 @@ program
     });
   });
 
+  program
+  .command("update-reserve")
+  .description("update reserve")
+  .option("--program_id <string>", "")
+  .option("--payer <string>", "")
+  .option("--market_owner <string>", "")
+  .option("--cluster <string>", "")
+  .option("--network_url <string>", "")
+  .option("--market_addr <string>", "Market address")
+  .option("--reserve_addr <string>", "Reserve address")
+  .option("--borrow_fee <number>", "")
+  .option("--borrow_limit <number>", "")
+  .option("--deposit_limit <number>", "")
+  .action(async (params) => {
+    let {
+      program_id,
+      payer,
+      market_owner,
+      cluster,
+      network_url,
+      market_addr,
+      reserve_addr,
+      borrow_fee,
+      borrow_limit,
+      deposit_limit,
+    } = params;
+
+    console.log("Update reserve");
+    console.log("params:", params);
+    
+    let exeParams = [
+      `--fee-payer ${payer}`,
+      `--market-owner ${market_owner}`,
+      `--market ${market_addr}`,
+      `--reserve ${reserve_addr}`
+    ];
+    
+    if (borrow_fee != undefined) {
+      exeParams.push(`--borrow-fee ${borrow_fee}`);
+    }
+
+    if (borrow_limit != undefined) {
+      exeParams.push(`--borrow-limit ${borrow_limit}`);
+    }
+
+    if (deposit_limit != undefined) {
+      exeParams.push(`--deposit-limit ${deposit_limit}`);
+    }
+
+    exeParams.push("--verbose");
+
+    const currentExeDir = path.join(__dirname, "..");
+    console.log("Execution folder: ", currentExeDir);
+    let exeCmd =
+      `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} update-reserve ` +
+      exeParams.join(" ");
+    exec(exeCmd, { shell: "/bin/bash" }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`);
+      }
+      console.error("stderr: ", stderr);
+      console.log("stdout: ", stdout);
+    });
+  });
+
 program.parse();
