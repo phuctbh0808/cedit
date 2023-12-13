@@ -1,0 +1,21 @@
+[package]
+name = "reearn_program"
+version = "0.1.0"
+description = "Created with Anchor"
+edition = "2021"
+
+[lib]
+crate-type = ["cdylib", "lib"]
+name = "reearn_program"
+
+[features]
+no-entrypoint = []
+no-idl = []
+no-log-ix-name = []
+cpi = ["no-entrypoint"]
+default = []
+
+[dependencies]
+anchor-lang = { git = "https://github.com/project-serum/anchor", tag = "v0.21.0", version = "0.21.0", package = "anchor-lang", features = ["init-if-needed"]}
+anchor-spl = { git = "https://github.com/project-serum/anchor", tag = "v0.21.0", version = "0.21.0", package = "anchor-spl"}
+solana-program = "=1.13.3"
