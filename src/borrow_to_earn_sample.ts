@@ -258,7 +258,8 @@ let claimRewardFn = async () => {
   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
   recoverTx.sign(alice);
 
-  await connection.sendRawTransaction(recoverTx.serialize());
+  let hash = await connection.sendRawTransaction(recoverTx.serialize());
+  console.log(hash);
   await fetchObligationRewardsFn();
 };
 

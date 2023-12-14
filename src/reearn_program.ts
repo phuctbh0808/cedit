@@ -176,7 +176,7 @@ export type ReearnProgram = {
         },
         {
           "name": "authority",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -206,7 +206,7 @@ export type ReearnProgram = {
         },
         {
           "name": "configAccount",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -590,7 +590,7 @@ export const IDL: ReearnProgram = {
         },
         {
           "name": "authority",
-          "isMut": true,
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -620,7 +620,7 @@ export const IDL: ReearnProgram = {
         },
         {
           "name": "configAccount",
-          "isMut": true,
+          "isMut": false,
           "isSigner": false
         },
         {

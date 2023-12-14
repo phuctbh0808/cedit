@@ -9,7 +9,6 @@ pub struct ClaimReward<'info> {
     #[account(mut)]
     fee_payer: Signer<'info>,
     #[account(
-        mut,
         address = obligation_reward.owner @ ReearnErrorCode::WrongRewardOwner,
     )]
     pub authority: Signer<'info>,
@@ -42,7 +41,6 @@ pub struct ClaimReward<'info> {
     )]
     pub obligation_reward: Account<'info, ObligationReward>,
     #[account(
-        mut,
         seeds = [CONFIG_SEED, config_account.admin.as_ref()],
         bump = config_account.bump[0],
     )]
@@ -70,33 +68,48 @@ pub fn exec(
 
     if obligation_reward.check_claimable(config, clock) {
         require!(obligation_reward.exponent <= 0, ReearnErrorCode::ExpoPositiveNonSupport);
-        let exponent = obligation_reward.exponent
-            .checked_abs()
-            .ok_or(ReearnErrorCode::MathOverflow)?
-            .try_into()
-            .map_err(|_| ReearnErrorCode::MathOverflow)?;
-        let decimals = 10u64
-            .checked_pow(exponent)
-            .ok_or(ReearnErrorCode::MathOverflow)?;
-        let reward_amount = obligation_reward.reward_amount
-            .checked_div(decimals)
-            .ok_or(ReearnErrorCode::MathOverflow)?;
+        let abs_exponent = obligation_reward.exponent
+        .checked_abs()
+        .ok_or(ReearnErrorCode::MathOverflow)?
+        .try_into()
+        .map_err(|_| ReearnErrorCode::MathOverflow)?;
+    
+        let base = 10u64;
+        let exponentiated_base = base
+        .checked_pow(abs_exponent)
+        .ok_or(ReearnErrorCode::MathOverflow)?;
+
+        let billion = 10u64;
+        let reward_decimals = billion
+        .checked_pow(9)
+        .ok_or(ReearnErrorCode::MathOverflow)?;
+
+        let calculated_reward = obligation_reward.reward_amount
+        .checked_mul(reward_decimals)
+        .ok_or(ReearnErrorCode::MathOverflow)?
+        .checked_div(exponentiated_base)
+        .ok_or(ReearnErrorCode::MathOverflow)?; 
 
         let destination = &ctx.accounts.token_account;
         let source = &ctx.accounts.vault_token_account;
         let token_program = &ctx.accounts.token_program;
+        let vault_account = &ctx.accounts.vault;
         let config_account = &ctx.accounts.config_account;
-
-        let cpi_accounts = Transfer {
-            from: source.to_account_info().clone(),
-            to: destination.to_account_info().clone(),
-            authority: config_account.to_account_info().clone(),
-        };
-        let cpi_program = token_program.to_account_info();
+        let config_key = config_account.clone().key();
+        let bump = config_account.vault_bump[0];
+        let signer: &[&[&[u8]]] = &[&[VAULT_SEED, config_key.as_ref(), &[bump]]];
+        let cpi_ctx = CpiContext::new_with_signer(
+            token_program.to_account_info(),
+            Transfer {
+                from: source.to_account_info().clone(),
+                to: destination.to_account_info().clone(),
+                authority: vault_account.to_account_info().clone(),
+            },
+            signer,
+        );
 
         msg!("Transfering reward");
-        token::transfer(
-            CpiContext::new(cpi_program, cpi_accounts), reward_amount)?;
+        token::transfer(cpi_ctx, calculated_reward)?;
         
         obligation_reward.reward_amount = 0;
         obligation_reward.exponent = 0;
