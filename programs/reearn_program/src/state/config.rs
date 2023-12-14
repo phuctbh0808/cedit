@@ -24,7 +24,8 @@ impl Config {
         self.vault_bump = [vault_bump];
         self.admin = admin;
         self.operator = operator;
-        self.lock_duration = 86400; // 1 day
+        // self.lock_duration = 86400; // 1 day
+        self.lock_duration = 120; // 2 minutes
         self.max_reward_per_obligation = 3;
         Ok(())
     }

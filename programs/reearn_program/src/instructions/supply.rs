@@ -1,13 +1,16 @@
 use crate::{constants::*, state::*};
 use anchor_lang::prelude::*;
-use anchor_spl::token::{TokenAccount, Mint, Token, Transfer, self};
+use anchor_spl::{token::{TokenAccount, Mint, Token, Transfer, self}, associated_token::AssociatedToken};
 use crate::reward_token::*;
 
 #[derive(Accounts)]
 pub struct SupplyReward<'info> {
     #[account(mut)]
+    fee_payer: Signer<'info>,
+    #[account()]
     pub authority: Signer<'info>,
     #[account(
+        mut,
         associated_token::mint = mint, 
         associated_token::authority = authority
     )]
@@ -21,7 +24,8 @@ pub struct SupplyReward<'info> {
     /// CHECK: general account for vault
     pub vault: AccountInfo<'info>,
     #[account(
-        mut,
+        init_if_needed,
+        payer = fee_payer,
         associated_token::mint = mint, 
         associated_token::authority = vault
     )]
@@ -35,6 +39,9 @@ pub struct SupplyReward<'info> {
     )]
     pub config_account: Account<'info, Config>,
     pub token_program: Program<'info, Token>,
+    pub system_program: Program<'info, System>,
+    pub associated_token_program: Program<'info, AssociatedToken>,
+    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn exec(

@@ -6,12 +6,15 @@ use crate::reward_token::*;
 #[derive(Accounts)]
 #[instruction(obligation: Pubkey)]
 pub struct ClaimReward<'info> {
+    #[account(mut)]
+    fee_payer: Signer<'info>,
     #[account(
         mut,
         address = obligation_reward.owner @ ReearnErrorCode::WrongRewardOwner,
     )]
     pub authority: Signer<'info>,
     #[account(
+        mut,
         associated_token::mint = mint, 
         associated_token::authority = authority
     )]
@@ -82,15 +85,16 @@ pub fn exec(
         let destination = &ctx.accounts.token_account;
         let source = &ctx.accounts.vault_token_account;
         let token_program = &ctx.accounts.token_program;
-        let authority = &ctx.accounts.authority;
+        let config_account = &ctx.accounts.config_account;
 
         let cpi_accounts = Transfer {
             from: source.to_account_info().clone(),
             to: destination.to_account_info().clone(),
-            authority: authority.to_account_info().clone(),
+            authority: config_account.to_account_info().clone(),
         };
         let cpi_program = token_program.to_account_info();
 
+        msg!("Transfering reward");
         token::transfer(
             CpiContext::new(cpi_program, cpi_accounts), reward_amount)?;
         

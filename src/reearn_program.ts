@@ -6,8 +6,13 @@ export type ReearnProgram = {
       "name": "initialize",
       "accounts": [
         {
-          "name": "authority",
+          "name": "feePayer",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -165,13 +170,18 @@ export type ReearnProgram = {
       "name": "claimReward",
       "accounts": [
         {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
           "name": "authority",
           "isMut": true,
           "isSigner": true
         },
         {
           "name": "tokenAccount",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -220,13 +230,18 @@ export type ReearnProgram = {
       "name": "supply",
       "accounts": [
         {
-          "name": "authority",
+          "name": "feePayer",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "tokenAccount",
+          "name": "authority",
           "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -251,6 +266,21 @@ export type ReearnProgram = {
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -390,8 +420,13 @@ export const IDL: ReearnProgram = {
       "name": "initialize",
       "accounts": [
         {
-          "name": "authority",
+          "name": "feePayer",
           "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
           "isSigner": true
         },
         {
@@ -549,13 +584,18 @@ export const IDL: ReearnProgram = {
       "name": "claimReward",
       "accounts": [
         {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
           "name": "authority",
           "isMut": true,
           "isSigner": true
         },
         {
           "name": "tokenAccount",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -604,13 +644,18 @@ export const IDL: ReearnProgram = {
       "name": "supply",
       "accounts": [
         {
-          "name": "authority",
+          "name": "feePayer",
           "isMut": true,
           "isSigner": true
         },
         {
-          "name": "tokenAccount",
+          "name": "authority",
           "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
           "isSigner": false
         },
         {
@@ -635,6 +680,21 @@ export const IDL: ReearnProgram = {
         },
         {
           "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
           "isMut": false,
           "isSigner": false
         }

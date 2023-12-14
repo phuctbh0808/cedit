@@ -1,26 +1,26 @@
-use crate::{constants::*, errors::ReearnErrorCode, state::*};
+use crate::{constants::*, state::*};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
 pub struct Initialize<'info> {
-    #[account(
-        mut,
-        address = config_account.admin @ ReearnErrorCode::OnlyAdmin)]
+    #[account(mut)]
+    pub fee_payer: Signer<'info>,
+    #[account()]
     pub authority: Signer<'info>,
     #[account(
         init,
         seeds = [CONFIG_SEED, authority.key().as_ref()],
         bump,
-        payer = authority,
+        payer = fee_payer,
         space = Config::LEN,
     )]
     pub config_account: Account<'info, Config>,
     #[account(
         init,
-        owner = system_program.key(),
+        owner = config_account.key(),
         seeds = [VAULT_SEED, config_account.key().as_ref()],
         bump,
-        payer = authority,
+        payer = fee_payer,
         space = 0,
     )]
     /// CHECK: general account for vault
