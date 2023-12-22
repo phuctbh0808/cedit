@@ -34,19 +34,21 @@ pub fn exec(
     let clock = &Clock::get()?;
     let config = &ctx.accounts.config_account;
 
-    require!(obligation_reward.obligation_id == obligation, ReearnErrorCode::WrongObligation);
-    require!(obligation_reward.owner == wallet, ReearnErrorCode::WrongWallet);
+    require!(
+        obligation_reward.obligation_id == obligation,
+        ReearnErrorCode::WrongObligation
+    );
+    require!(
+        obligation_reward.owner == wallet,
+        ReearnErrorCode::WrongWallet
+    );
 
     if obligation_reward.check_claimable(config, clock) {
         if clock.unix_timestamp - obligation_reward.last_updated > config.lock_duration as i64 {
-            if obligation_reward.reward_amount == 0 {
-                require!(expo <= 0, ReearnErrorCode::ExpoPositiveNonSupport);
-                obligation_reward.exponent = expo;
-                obligation_reward.reward_amount = amount;
-                obligation_reward.last_updated = clock.unix_timestamp;
-            } else {
-                msg!("Already refreshed")
-            }
+            require!(expo <= 0, ReearnErrorCode::ExpoPositiveNonSupport);
+            obligation_reward.exponent = expo;
+            obligation_reward.reward_amount = amount;
+            obligation_reward.last_updated = clock.unix_timestamp;
         } else {
             msg!("Only allowed to refresh once per lock duration")
         }
