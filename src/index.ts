@@ -53,7 +53,7 @@ async function getSPLTokenBalance(tokenAccount: PublicKey, connection: Connectio
 
 program
   .command("supply")
-  .description("Supply token for seperate reserve")
+  .description("Supply token for separate reserve")
   .option("--supplier <string>", "")
   .option("--amount <number>", "")
   .option("--token_sympol <string>", "Token symbol: reVND, reUSD")
@@ -81,7 +81,7 @@ program
         decimals = 0;
         break;
       default:
-        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        console.log("Invalid token symbol. We only support reUSD and reVND");
         return;
     }
     console.log("Start to supply token for reserve");
@@ -109,7 +109,7 @@ program
     }
 
     const depositAmount = new BigNumber(amount).shiftedBy(decimals).toFixed(0);
-    console.log("IS_MAINENT ", process.env.NEXT_PUBLIC_IS_MAINNET);
+    console.log("IS_MAINNET ", process.env.NEXT_PUBLIC_IS_MAINNET);
     console.log("Building supply txns...");
     const env = cluster == "mainnet" ? "production" : "testnet";
     const relendAction = await RelendAction.buildDepositTxns(
@@ -140,7 +140,7 @@ program
 
 program
   .command("withdraw")
-  .description("Withdraw collateral from seperate reserve")
+  .description("Withdraw collateral from separate reserve")
   .option("--supplier <string>", "")
   .option("--amount <number>", "")
   .option("--token_sympol <string>", "Token symbol: reUSD, reVND")
@@ -162,7 +162,7 @@ program
         decimals = 0;
         break;
       default:
-        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        console.log("Invalid token symbol. We only support reUSD and reVND");
         return;
     }
     const connection = new Connection(network_url, opts);
