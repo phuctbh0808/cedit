@@ -53,7 +53,7 @@ async function getSPLTokenBalance(tokenAccount: PublicKey, connection: Connectio
 
 program
   .command("supply")
-  .description("Supply token for seperate reserve")
+  .description("Supply token for separate reserve")
   .option("--supplier <string>", "")
   .option("--amount <number>", "")
   .option("--token_sympol <string>", "Token symbol: reVND, reUSD")
@@ -81,7 +81,7 @@ program
         decimals = 0;
         break;
       default:
-        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        console.log("Invalid token symbol. We only support reUSD and reVND");
         return;
     }
     console.log("Start to supply token for reserve");
@@ -109,7 +109,7 @@ program
     }
 
     const depositAmount = new BigNumber(amount).shiftedBy(decimals).toFixed(0);
-    console.log("IS_MAINENT ", process.env.NEXT_PUBLIC_IS_MAINNET);
+    console.log("IS_MAINNET ", process.env.NEXT_PUBLIC_IS_MAINNET);
     console.log("Building supply txns...");
     const env = cluster == "mainnet" ? "production" : "testnet";
     const relendAction = await RelendAction.buildDepositTxns(
@@ -140,7 +140,7 @@ program
 
 program
   .command("withdraw")
-  .description("Withdraw collateral from seperate reserve")
+  .description("Withdraw collateral from separate reserve")
   .option("--supplier <string>", "")
   .option("--amount <number>", "")
   .option("--token_sympol <string>", "Token symbol: reUSD, reVND")
@@ -162,7 +162,7 @@ program
         decimals = 0;
         break;
       default:
-        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        console.log("Invalid token symbol. We only support reUSD and reVND");
         return;
     }
     const connection = new Connection(network_url, opts);
@@ -254,6 +254,7 @@ program
     let reETH = new PublicKey("ETH6nBodGWYQxz5qZ6C94E4DdQuH5iGTSwdhLHgiLzRy");
     let reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
     let reNGN = new PublicKey("BfSYryW6Q93iUKE4uNsUtAdxQT9uU4GSVg2si3outLk1");
+    let GAST = new PublicKey("GvTwnAQLTdM6fMZbuGQoVj5odefCC2FsDvaMgxqZV1fi");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
       reBTC = new PublicKey("GwPQTMg3eMVpDTEE3daZDtGsBtNHBK3X47dbBJvXUzF4");
@@ -266,12 +267,14 @@ program
     const caseRenec = "renecmainnet";
     const caseVND = "revndmainnet";
     const caseNGN = "rengnmainnet";
+    const caseGAST = "gastmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
     const caseETH_test = "reethtestnet";
     const caseRenec_test = "renectestnet";
     const caseVND_test = "revndtestnet";
     const caseNGN_test = "rengntestnet";
+    const caseGAST_test = "gasttestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
     let oracleProduct = "";
@@ -301,6 +304,10 @@ program
         oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
         oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
         break;
+      case caseGAST:
+        oracleProduct = "45uxAij4yzKyyBebFLzHD1aCqfXaUYuENJsJ8d2R8bHK";
+        oraclePrice = "9xfsZyNnsiLR7GUf6qSyscTSSNgPoUAvUrwVHPnXkATh";
+        break;
       case caseNGN_test:
         oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
         oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
@@ -325,6 +332,10 @@ program
         oracleProduct = "B8C5ZttE6M3RhF533xSgXQv6zsKkBwRodBoqdahu85JQ";
         oraclePrice = "Hf2adYGtFBBiraDGU2AzvXaEjmxTPDRH2uuGzdprjmCh";
         break;
+      case caseGAST_test:
+        oracleProduct = "45uxAij4yzKyyBebFLzHD1aCqfXaUYuENJsJ8d2R8bHK";
+        oraclePrice = "9xfsZyNnsiLR7GUf6qSyscTSSNgPoUAvUrwVHPnXkATh";
+        break;
     }
 
     console.log("Add new reserve");
@@ -348,7 +359,10 @@ program
         break;
       case "RENGN":
         tokenProgramId = reNGN;
-        break;``
+        break;
+      case "GAST":
+        tokenProgramId = GAST;
+        break;
     }
 
     if (token_sympol.toUpperCase() != "RENEC") {
@@ -484,14 +498,14 @@ program
 
     console.log("Update reserve");
     console.log("params:", params);
-    
+
     let exeParams = [
       `--fee-payer ${payer}`,
       `--market-owner ${market_owner}`,
       `--market ${market_addr}`,
       `--reserve ${reserve_addr}`
     ];
-    
+
     if (borrow_fee != undefined) {
       exeParams.push(`--borrow-fee ${borrow_fee}`);
     }
