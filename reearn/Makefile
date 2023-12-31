@@ -9,7 +9,7 @@ export PATH:=$(HOME)/.local/share/solana/install/active_release/bin:$(PATH)
 CLUSTER ?= testnet
 
 export WALLET_PATH:=.wallets
-export PROGRAM_NAME?=reearn_program
+export REEARN_PROGRAM?=reearn_program
 
 export CLUSTER_URL := $(if $(filter testnet,$(CLUSTER)),$(RENEC_TESTNET_URL),\
                  $(if $(filter mainnet,$(CLUSTER)),$(RENEC_MAINNET_URL),\

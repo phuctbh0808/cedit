@@ -4,11 +4,11 @@
 # gen new program id
 anchor keys list
 
-PROGRAM_NAME_UNDERSCORE=${PROGRAM_NAME//-/_}
+PROGRAM_NAME_UNDERSCORE=${REEARN_PROGRAM//-/_}
 PROGRAM_ID=$(solana address -k target/deploy/$PROGRAM_NAME_UNDERSCORE-keypair.json)
 
 # Set the file path
-FILE_PATH="programs/$PROGRAM_NAME/src/lib.rs"
+FILE_PATH="programs/$REEARN_PROGRAM/src/lib.rs"
 
 # Make sure the file exists
 if [ ! -f "$FILE_PATH" ]; then

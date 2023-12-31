@@ -7,5 +7,5 @@ else
     exit 1
 fi
 
-PROGRAM_NAME_UNDERSCORE=${PROGRAM_NAME//-/_}
+PROGRAM_NAME_UNDERSCORE=${REEARN_PROGRAM//-/_}
 solana program deploy target/deploy/$PROGRAM_NAME_UNDERSCORE.so --keypair $WALLET_PATH/$WALLET_NAME.json --url $CLUSTER_URL
