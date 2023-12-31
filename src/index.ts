@@ -18,16 +18,24 @@ import {
   getOrCreateAssociatedTokenAccount,
   createSyncNativeInstruction,
   NATIVE_MINT,
+  getAssociatedTokenAddress,
+  TOKEN_PROGRAM_ID,
+  ASSOCIATED_TOKEN_PROGRAM_ID,
 } from "spl-token";
 import { BN } from "bn.js";
 import { RelendAction, RelendMarket } from "relend-adapter";
 import BigNumber from "bignumber.js";
+import { IDL } from "./reearn_program";
 
 const program = new Command();
 
 const opts: anchor.web3.ConfirmOptions = {
   commitment: "confirmed",
 };
+
+const BTE_CONFIG_SEED = "supernova";
+const BTE_OBLIGATION_REWARD_SEED = "tothemoon";
+const BTE_VAULT_SEED = "onepiece";
 
 async function getRENECBalance(walletPublicKey: PublicKey, connection: Connection) {
   try {
@@ -53,7 +61,7 @@ async function getSPLTokenBalance(tokenAccount: PublicKey, connection: Connectio
 
 program
   .command("supply")
-  .description("Supply token for seperate reserve")
+  .description("Supply token for separate reserve")
   .option("--supplier <string>", "")
   .option("--amount <number>", "")
   .option("--token_sympol <string>", "Token symbol: reVND, reUSD")
@@ -81,7 +89,7 @@ program
         decimals = 0;
         break;
       default:
-        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        console.log("Invalid token symbol. We only support reUSD and reVND");
         return;
     }
     console.log("Start to supply token for reserve");
@@ -109,7 +117,7 @@ program
     }
 
     const depositAmount = new BigNumber(amount).shiftedBy(decimals).toFixed(0);
-    console.log("IS_MAINENT ", process.env.NEXT_PUBLIC_IS_MAINNET);
+    console.log("IS_MAINNET ", process.env.NEXT_PUBLIC_IS_MAINNET);
     console.log("Building supply txns...");
     const env = cluster == "mainnet" ? "production" : "testnet";
     const relendAction = await RelendAction.buildDepositTxns(
@@ -140,7 +148,7 @@ program
 
 program
   .command("withdraw")
-  .description("Withdraw collateral from seperate reserve")
+  .description("Withdraw collateral from separate reserve")
   .option("--supplier <string>", "")
   .option("--amount <number>", "")
   .option("--token_sympol <string>", "Token symbol: reUSD, reVND")
@@ -162,7 +170,7 @@ program
         decimals = 0;
         break;
       default:
-        console.log("Invalid token symbol. We onlly support reUSD and reVND");
+        console.log("Invalid token symbol. We only support reUSD and reVND");
         return;
     }
     const connection = new Connection(network_url, opts);
@@ -254,6 +262,7 @@ program
     let reETH = new PublicKey("ETH6nBodGWYQxz5qZ6C94E4DdQuH5iGTSwdhLHgiLzRy");
     let reVND = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
     let reNGN = new PublicKey("BfSYryW6Q93iUKE4uNsUtAdxQT9uU4GSVg2si3outLk1");
+    let GAST = new PublicKey("GvTwnAQLTdM6fMZbuGQoVj5odefCC2FsDvaMgxqZV1fi");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
       reBTC = new PublicKey("GwPQTMg3eMVpDTEE3daZDtGsBtNHBK3X47dbBJvXUzF4");
@@ -266,12 +275,14 @@ program
     const caseRenec = "renecmainnet";
     const caseVND = "revndmainnet";
     const caseNGN = "rengnmainnet";
+    const caseGAST = "gastmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
     const caseETH_test = "reethtestnet";
     const caseRenec_test = "renectestnet";
     const caseVND_test = "revndtestnet";
     const caseNGN_test = "rengntestnet";
+    const caseGAST_test = "gasttestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
     let oracleProduct = "";
@@ -301,6 +312,10 @@ program
         oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
         oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
         break;
+      case caseGAST:
+        oracleProduct = "45uxAij4yzKyyBebFLzHD1aCqfXaUYuENJsJ8d2R8bHK";
+        oraclePrice = "9xfsZyNnsiLR7GUf6qSyscTSSNgPoUAvUrwVHPnXkATh";
+        break;
       case caseNGN_test:
         oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
         oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
@@ -325,6 +340,10 @@ program
         oracleProduct = "B8C5ZttE6M3RhF533xSgXQv6zsKkBwRodBoqdahu85JQ";
         oraclePrice = "Hf2adYGtFBBiraDGU2AzvXaEjmxTPDRH2uuGzdprjmCh";
         break;
+      case caseGAST_test:
+        oracleProduct = "45uxAij4yzKyyBebFLzHD1aCqfXaUYuENJsJ8d2R8bHK";
+        oraclePrice = "9xfsZyNnsiLR7GUf6qSyscTSSNgPoUAvUrwVHPnXkATh";
+        break;
     }
 
     console.log("Add new reserve");
@@ -348,7 +367,10 @@ program
         break;
       case "RENGN":
         tokenProgramId = reNGN;
-        break;``
+        break;
+      case "GAST":
+        tokenProgramId = GAST;
+        break;
     }
 
     if (token_sympol.toUpperCase() != "RENEC") {
@@ -455,43 +477,55 @@ program
     });
   });
 
-  program
+program
   .command("update-reserve")
   .description("update reserve")
   .option("--program_id <string>", "")
   .option("--payer <string>", "")
   .option("--market_owner <string>", "")
-  .option("--cluster <string>", "")
-  .option("--network_url <string>", "")
   .option("--market_addr <string>", "Market address")
   .option("--reserve_addr <string>", "Reserve address")
   .option("--borrow_fee <number>", "")
   .option("--borrow_limit <number>", "")
   .option("--deposit_limit <number>", "")
+  .option("--optimal_utilization_rate <number>", "")
+  .option("--max_utilization_rate <number>", "")
+  .option("--min_borrow_rate <number>", "")
+  .option("--optimal_borrow_rate <number>", "")
+  .option("--max_borrow_rate <number>", "")
+  .option("--super_max_borrow_rate <number>", "")
+  .option("--added_borrow_weight_bps <number>", "")
+  .option("--protocol_take_rate <number>", "")
   .action(async (params) => {
     let {
       program_id,
       payer,
       market_owner,
-      cluster,
-      network_url,
       market_addr,
       reserve_addr,
       borrow_fee,
       borrow_limit,
       deposit_limit,
+      optimal_utilization_rate,
+      max_utilization_rate,
+      min_borrow_rate,
+      optimal_borrow_rate,
+      max_borrow_rate,
+      super_max_borrow_rate,
+      added_borrow_weight_bps,
+      protocol_take_rate,
     } = params;
 
     console.log("Update reserve");
     console.log("params:", params);
-    
+
     let exeParams = [
       `--fee-payer ${payer}`,
       `--market-owner ${market_owner}`,
       `--market ${market_addr}`,
-      `--reserve ${reserve_addr}`
+      `--reserve ${reserve_addr}`,
     ];
-    
+
     if (borrow_fee != undefined) {
       exeParams.push(`--borrow-fee ${borrow_fee}`);
     }
@@ -502,6 +536,38 @@ program
 
     if (deposit_limit != undefined) {
       exeParams.push(`--deposit-limit ${deposit_limit}`);
+    }
+
+    if (optimal_utilization_rate != undefined) {
+      exeParams.push(`--optimal-utilization-rate ${optimal_utilization_rate}`);
+    }
+
+    if (max_utilization_rate != undefined) {
+      exeParams.push(`--max-utilization-rate ${max_utilization_rate}`);
+    }
+
+    if (min_borrow_rate != undefined) {
+      exeParams.push(`--min-borrow-rate ${min_borrow_rate}`);
+    }
+
+    if (optimal_borrow_rate != undefined) {
+      exeParams.push(`--optimal-borrow-rate ${optimal_borrow_rate}`);
+    }
+
+    if (max_borrow_rate != undefined) {
+      exeParams.push(`--max-borrow-rate ${max_borrow_rate}`);
+    }
+
+    if (super_max_borrow_rate != undefined) {
+      exeParams.push(`--super-max-borrow-rate ${super_max_borrow_rate}`);
+    }
+
+    if (added_borrow_weight_bps != undefined) {
+      exeParams.push(`--added-borrow-weight-bps ${added_borrow_weight_bps}`);
+    }
+
+    if (protocol_take_rate != undefined) {
+      exeParams.push(`--protocol-take-rate ${protocol_take_rate}`);
     }
 
     exeParams.push("--verbose");
@@ -518,6 +584,215 @@ program
       console.error("stderr: ", stderr);
       console.log("stdout: ", stdout);
     });
+  });
+
+program
+  .command("set-lending-market-operator")
+  .description("Set lending market operator")
+  .action(async (params) => {});
+
+program
+  .command("init-reearn-pool")
+  .description("Init reearn pool")
+  .option("--program_id <string>", "")
+  .option("--authority <string>", "")
+  .option("--network_url <string>", "")
+  .action(async (params) => {
+    let { program_id, authority, network_url } = params;
+
+    console.log("Init reearn pool");
+    console.log("params:", params);
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(authority));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const program = new anchor.Program(IDL, program_id, provider);
+    let owner = keypair.publicKey;
+
+    let bump: number;
+    let configAccount: PublicKey;
+    let vaultAccount: PublicKey;
+    let vaultBump: number;
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(BTE_CONFIG_SEED), owner.toBuffer()],
+      program_id,
+    );
+    [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(BTE_VAULT_SEED), configAccount.toBuffer()],
+      program_id,
+    );
+
+    const instructions = [
+      await program.methods
+        .initialize(bump, vaultBump, keypair.publicKey)
+        .accounts({
+          feePayer: owner,
+          authority: owner,
+          configAccount,
+          vault: vaultAccount,
+          systemProgram: SystemProgram.programId,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        })
+        .instruction(),
+    ];
+
+    console.log("Initialzing reearn pool");
+    const tx = new Transaction().add(...instructions);
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+    tx.feePayer = owner;
+    const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+    recoverTx.sign(keypair);
+
+    console.log("Init successfully, retrieving config account info")
+    await connection.sendRawTransaction(recoverTx.serialize());
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(BTE_CONFIG_SEED), owner.toBuffer()],
+      program_id,
+    );
+    const configAccountInfo = await program.account.config.fetch(configAccount);
+    console.log(configAccountInfo);
+  });
+
+program
+  .command("supply-reearn-pool")
+  .option("--program_id <string>", "")
+  .option("--source <string>", "")
+  .option("--network_url <string>", "")
+  .option("--cluster <string>", "")
+  .option("--amount <number>", "")
+  .description("Supply token for reearn pool")
+  .action(async (params) => {
+    let { program_id, source, network_url, cluster, amount } = params;
+
+    console.log("Supply reearn pool");
+    console.log("params:", params);
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const program = new anchor.Program(IDL, program_id, provider);
+    let sourceOwner = keypair.publicKey;
+    let relendTokenMint = new PublicKey("Gt9oqTVmAwhrjBpS5j4Nc39fr9gCYArWxVXuHHc8QxnJ");
+    if (cluster == "testnet") {
+      relendTokenMint = new PublicKey("4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK");
+    }
+
+    console.log("Check if source owner has enough balance")
+    const ata = await getOrCreateAssociatedTokenAccount(
+      connection,
+      keypair,
+      relendTokenMint,
+      sourceOwner,
+    );
+
+    const balance = await getSPLTokenBalance(ata.address, connection);
+    if (balance < amount) {
+      console.log(
+        `Please fund ${amount} RELEND to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
+      );
+      return;
+    }
+
+    console.log("Source owner address: ", sourceOwner.toBase58());
+
+    let bump: number;
+    let configAccount: PublicKey;
+    let vaultAccount: PublicKey;
+    let vaultBump: number;
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(BTE_CONFIG_SEED), sourceOwner.toBuffer()],
+      program_id,
+    );
+    [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(BTE_VAULT_SEED), configAccount.toBuffer()],
+      program_id,
+    );
+
+    const vaultAta = await getAssociatedTokenAddress(relendTokenMint, vaultAccount, true);
+    console.log("vault ATA: ", vaultAta.toBase58());
+    const fromAta = ata;
+    console.log("source ATA: ", fromAta.address.toBase58());
+    const instructions = [
+      await program.methods
+        .supply(new BN(amount * 10 ** 9))
+        .accounts({
+          feePayer: sourceOwner,
+          authority: sourceOwner,
+          tokenAccount: fromAta.address,
+          vault: vaultAccount,
+          vaultTokenAccount: vaultAta,
+          mint: relendTokenMint,
+          configAccount,
+          tokenProgram: TOKEN_PROGRAM_ID,
+          systemProgram: SystemProgram.programId,
+          associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+          rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+        })
+        .instruction(),
+    ];
+
+    console.log("Supplying reearn pool");
+    const tx = new Transaction().add(...instructions);
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+    tx.feePayer = sourceOwner;
+    const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+    recoverTx.sign(keypair);
+
+    await connection.sendRawTransaction(recoverTx.serialize());
+    console.log("Supply successfully!")
+  });
+
+program
+  .command("set-reearn-operator")
+  .option("--program_id <string>", "")
+  .option("--authority <string>", "")
+  .option("--network_url <string>", "")
+  .option("--operator <string>", "")
+  .description("Set reearn operator")
+  .action(async (params) => {
+    let { program_id, authority, network_url, operator } = params;
+
+    console.log("Set reearn operator");
+    console.log("params:", params);
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(authority));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const program = new anchor.Program(IDL, program_id, provider);
+    let sourceOwner = keypair.publicKey;
+
+    let bump: number;
+    let configAccount: PublicKey;
+
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(BTE_CONFIG_SEED), sourceOwner.toBuffer()],
+      program_id,
+    );
+
+    const instructions = [
+      await program.methods
+        .changeOperator(new PublicKey(operator))
+        .accounts({
+          authority: sourceOwner,
+          configAccount,
+        })
+        .instruction(),
+    ];
+
+    console.log("Setting reearn operator");
+    const tx = new Transaction().add(...instructions);
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+    tx.feePayer = sourceOwner;
+    const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+    recoverTx.sign(keypair);
+
+    console.log("Change operator successfully, retrieving config account info")
+    await connection.sendRawTransaction(recoverTx.serialize());
+    const configAccountInfo = await program.account.config.fetch(configAccount);
+    console.log(configAccountInfo);
   });
 
 program.parse();
