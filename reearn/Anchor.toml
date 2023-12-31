@@ -1,0 +1,12 @@
+[programs.localnet]
+reearn_program = "AbXeeV2bPhaAM2DZ5tboUzPDEt9Pe5HvAms6UvHcSoLv"
+
+[registry]
+url = "https://anchor.projectserum.com"
+
+[provider]
+cluster = "localnet"
+wallet = "~/.config/renec/id.json"
+
+[scripts]
+test = "yarn run ts-mocha -p ./tsconfig.json -t 1000000 tests/**/*.ts"
