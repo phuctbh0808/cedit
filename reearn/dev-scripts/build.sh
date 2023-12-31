@@ -1,14 +1,16 @@
 
-#!/bin/bash
-
-# gen new program id
-anchor keys list
-
 PROGRAM_NAME_UNDERSCORE=${REEARN_PROGRAM//-/_}
-PROGRAM_ID=$(solana address -k target/deploy/$PROGRAM_NAME_UNDERSCORE-keypair.json)
+
+if [[ -n $1 ]]; then
+    PROGRAM_ID=$1
+else
+    anchor keys list
+    PROGRAM_ID=$(solana address -k target/deploy/$PROGRAM_NAME_UNDERSCORE-keypair.json)
+fi
+echo "PROGRAM_ID: $PROGRAM_ID"
 
 # Set the file path
-FILE_PATH="programs/$REEARN_PROGRAM/src/lib.rs"
+FILE_PATH="reearn/programs/$REEARN_PROGRAM/src/lib.rs"
 
 # Make sure the file exists
 if [ ! -f "$FILE_PATH" ]; then
@@ -16,44 +18,27 @@ if [ ! -f "$FILE_PATH" ]; then
     exit 1
 fi
 
-echo "expected program id: $PROGRAM_ID"
+echo $PROGRAM_ID
 
 # Replace the existing declare_id! line with the new PROGRAM_ID
-if [[ "$OSTYPE" == "darwin"* ]]; then
-    # Mac OSX
-    sed -i "" "s/declare_id!(\"[^\"]*\")/declare_id!(\"$PROGRAM_ID\")/g" "$FILE_PATH"
-else
-    # Linux and others
-    sed -i "s/declare_id!(\"[^\"]*\")/declare_id!(\"$PROGRAM_ID\")/g" "$FILE_PATH"
-fi
+TEMP_FILE=$(mktemp)
+awk -v program_id="$PROGRAM_ID" \
+    '{gsub(/declare_id!\("[A-Za-z0-9]+"\);/, "declare_id!(\""program_id"\");")}1' \
+    "$FILE_PATH" > "$TEMP_FILE"
+cat "$TEMP_FILE" > "$FILE_PATH"
+rm "$TEMP_FILE"
 
-# Get program id from the file
-UPDATED_PROGRAM_ID=$(grep -E 'declare_id!\("[A-Za-z0-9]{44}"\);' "$FILE_PATH" | grep -oE '[A-Za-z0-9]{44}')
-echo "updated program id: $UPDATED_PROGRAM_ID"
+# Print the updated declare_id! line
+echo "updated file: $(grep -E 'declare_id!\("[A-Za-z0-9]+"\);' "$FILE_PATH")"
 
-# Compare it to the existing PROGRAM_ID
-if [[ "$PROGRAM_ID" != "$UPDATED_PROGRAM_ID" ]]; then
-    echo "Warning: PROGRAM_ID does not match the UPDATED_PROGRAM_ID"
-    exit 1
-fi
 
 # Build the program 
 anchor build 
 
-# Copy the artifacts into the app's artifacts folder
-cp target/idl/$PROGRAM_NAME_UNDERSCORE.json app/src/artifacts
-cp target/types/$PROGRAM_NAME_UNDERSCORE.ts app/src/artifacts
+# Copy the key to root folder
+TARGET_DIR="target/deploy"
 
-
-APP_CONFIG_FILE="app/src/artifacts/config.json"
-# Update the PROGRAM_ID in the config.json file
-TEMP_FILE=$(mktemp)
-
-# Replace the existing programId value with the new PROGRAM_ID
-awk -v program_id="$PROGRAM_ID" \
-  'BEGIN {FS=OFS="\""} \
-  /"programId":/ {$4=program_id} \
-  {print}' "$APP_CONFIG_FILE" > "$TEMP_FILE"
-
-# Replace the original config file with the modified one
-mv "$TEMP_FILE" "$APP_CONFIG_FILE"
+if [[ ! -d $TARGET_DIR ]]; then
+    mkdir -p $TARGET_DIR
+fi
+cp reearn/target/deploy/$REEARN_PROGRAM-keypair.json target/deploy

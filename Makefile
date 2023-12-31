@@ -28,7 +28,7 @@ build:
 	@./scripts/build.sh "$(program_id)"
 
 build-re:
-	cd reearn && make build
+	cd reearn && make build "$(program_id)"
 
 deploy-re:
 	cd reearn && make deploy "$(deployer)"
