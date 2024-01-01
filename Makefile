@@ -28,8 +28,12 @@ build:
 	@./scripts/build.sh "$(program_id)"
 
 build-re:
-	cd reearn && make build "$(program_id)"
-
+    if [ -z "$(program_id)" ]; then \
+        cd reearn && make build; \
+    else \
+        cd reearn && make build "$(program_id)"; \
+    fi
+	
 deploy-re:
 	cd reearn && make deploy "$(deployer)"
 
