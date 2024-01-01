@@ -649,7 +649,7 @@ program
     await connection.sendRawTransaction(recoverTx.serialize());
     [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_CONFIG_SEED), owner.toBuffer()],
-      program_id,
+      programId,
     );
     const configAccountInfo = await program.account.config.fetch(configAccount);
     console.log(configAccountInfo);
