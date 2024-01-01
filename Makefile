@@ -33,7 +33,7 @@ build-re:
     else \
         cd reearn && make build "$(program_id)"; \
     fi
-	
+
 deploy-re:
 	cd reearn && make deploy "$(deployer)"
 
