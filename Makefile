@@ -28,10 +28,12 @@ build:
 	@./scripts/build.sh "$(program_id)"
 
 build-re:
-	cd reearn && make build $(program_id)
+	@$(MAKE) install-deps CLI_VERSION=1.14.6 ANCHOR_VERSION=0.25.0		
+	cd reearn && dev-scripts/build.sh "$(program_id)"
 
 deploy-re:
-	cd reearn && make deploy "$(deployer)" "$(program_id)"
+	@$(MAKE) install-deps CLI_VERSION=$(CLI_VERSION)
+	cd reearn && dev-scripts/deploy.sh "$(deployer)" "$(program_id)"
 
 deploy: set-cluster-url
 	@./scripts/deploy.sh "$(deployer)"
