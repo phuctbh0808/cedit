@@ -1,11 +1,9 @@
-#!/bin/bash
-
 if [[ -n $1 ]]; then
-    WALLET_NAME=$1
+    WALLET_PATH=$1
 else
-    echo "Please provide a wallet name"
+    echo "Error: deployer not found: $WALLET_PATH"
     exit 1
 fi
 
 PROGRAM_NAME_UNDERSCORE=${REEARN_PROGRAM//-/_}
-solana program deploy target/deploy/$PROGRAM_NAME_UNDERSCORE.so --keypair $WALLET_PATH/$WALLET_NAME.json --url $CLUSTER_URL
+solana program deploy target/deploy/$PROGRAM_NAME_UNDERSCORE.so --keypair $WALLET_PATH --url $CLUSTER_URL
