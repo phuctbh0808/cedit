@@ -674,7 +674,7 @@ program
     const provider = new anchor.AnchorProvider(connection, wallet, opts);
     const program = new anchor.Program(IDL, program_id, provider);
     let sourceOwner = keypair.publicKey;
-    let relendTokenMint = new PublicKey("Gt9oqTVmAwhrjBpS5j4Nc39fr9gCYArWxVXuHHc8QxnJ");
+    let relendTokenMint = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
     if (cluster == "testnet") {
       relendTokenMint = new PublicKey("4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK");
     }
