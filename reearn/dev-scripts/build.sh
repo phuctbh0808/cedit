@@ -42,3 +42,4 @@ if [[ ! -d $TARGET_DIR ]]; then
     mkdir -p $TARGET_DIR
 fi
 cp target/deploy/$REEARN_PROGRAM-keypair.json ../target/deploy
+echo "Build successfully"
