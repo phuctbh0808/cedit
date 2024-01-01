@@ -10,7 +10,7 @@ fi
 echo "PROGRAM_ID: $PROGRAM_ID"
 
 # Set the file path
-FILE_PATH="reearn/programs/$REEARN_PROGRAM/src/lib.rs"
+FILE_PATH="programs/$REEARN_PROGRAM/src/lib.rs"
 
 # Make sure the file exists
 if [ ! -f "$FILE_PATH" ]; then
@@ -36,9 +36,9 @@ echo "updated file: $(grep -E 'declare_id!\("[A-Za-z0-9]+"\);' "$FILE_PATH")"
 anchor build 
 
 # Copy the key to root folder
-TARGET_DIR="target/deploy"
+TARGET_DIR="../target/deploy"
 
 if [[ ! -d $TARGET_DIR ]]; then
     mkdir -p $TARGET_DIR
 fi
-cp reearn/target/deploy/$REEARN_PROGRAM-keypair.json target/deploy
+cp target/deploy/$REEARN_PROGRAM-keypair.json ../target/deploy
