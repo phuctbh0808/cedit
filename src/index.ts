@@ -718,7 +718,7 @@ program
     console.log("source ATA: ", fromAta.address.toBase58());
     const instructions = [
       await program.methods
-        .supply(new BN(amount * 10 ** 9))
+        .supply(new BN(amount * 10 ** 0))
         .accounts({
           feePayer: sourceOwner,
           authority: sourceOwner,
