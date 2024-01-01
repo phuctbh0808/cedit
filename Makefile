@@ -29,9 +29,9 @@ build:
 
 build-re:
 	cd reearn && make build $(program_id)
-	
+
 deploy-re:
-	cd reearn && make deploy "$(deployer)"
+	cd reearn && make deploy "$(deployer)" "$(program_id)"
 
 deploy: set-cluster-url
 	@./scripts/deploy.sh "$(deployer)"
