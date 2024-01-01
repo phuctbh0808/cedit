@@ -16,7 +16,7 @@ export CLUSTER_URL := $(if $(filter testnet,$(CLUSTER)),$(RENEC_TESTNET_URL),\
                  $(if $(filter localnet,$(CLUSTER)),$(RENEC_LOCALNET_URL),\
                  $(error Unknown cluster name: $(CLUSTER)))))
 
-export CLI_VERSION := $(if $(filter testnet,$(CLUSTER)),1.14.6,$(if $(filter mainnet,$(CLUSTER)),1.9.29,$(if $(filter localnet,$(CLUSTER)),1.9.29,$(error Unknown cluster name: $(CLUSTER)))))
+export CLI_VERSION := 1.14.6
 
 show-network-config:
 	@echo "interacting with cluster: $(CLUSTER_URL), CLI_VERSION: $(CLI_VERSION)"
