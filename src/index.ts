@@ -607,7 +607,8 @@ program
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
     const wallet = new anchor.Wallet(keypair);
     const provider = new anchor.AnchorProvider(connection, wallet, opts);
-    const program = new anchor.Program(IDL, program_id, provider);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
     let owner = keypair.publicKey;
 
     let bump: number;
@@ -616,11 +617,11 @@ program
     let vaultBump: number;
     [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_CONFIG_SEED), owner.toBuffer()],
-      program_id,
+      programId,
     );
     [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_VAULT_SEED), configAccount.toBuffer()],
-      program_id,
+      programId,
     );
 
     const instructions = [
@@ -644,7 +645,7 @@ program
     const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
     recoverTx.sign(keypair);
 
-    console.log("Init successfully, retrieving config account info")
+    console.log("Init successfully, retrieving config account info");
     await connection.sendRawTransaction(recoverTx.serialize());
     [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_CONFIG_SEED), owner.toBuffer()],
@@ -672,14 +673,15 @@ program
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
     const wallet = new anchor.Wallet(keypair);
     const provider = new anchor.AnchorProvider(connection, wallet, opts);
-    const program = new anchor.Program(IDL, program_id, provider);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
     let sourceOwner = keypair.publicKey;
     let relendTokenMint = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
     if (cluster == "testnet") {
       relendTokenMint = new PublicKey("4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK");
     }
 
-    console.log("Check if source owner has enough balance")
+    console.log("Check if source owner has enough balance");
     const ata = await getOrCreateAssociatedTokenAccount(
       connection,
       keypair,
@@ -703,11 +705,11 @@ program
     let vaultBump: number;
     [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_CONFIG_SEED), sourceOwner.toBuffer()],
-      program_id,
+      programId,
     );
     [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_VAULT_SEED), configAccount.toBuffer()],
-      program_id,
+      programId,
     );
 
     const vaultAta = await getAssociatedTokenAddress(relendTokenMint, vaultAccount, true);
@@ -741,7 +743,7 @@ program
     recoverTx.sign(keypair);
 
     await connection.sendRawTransaction(recoverTx.serialize());
-    console.log("Supply successfully!")
+    console.log("Supply successfully!");
   });
 
 program
@@ -761,7 +763,8 @@ program
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
     const wallet = new anchor.Wallet(keypair);
     const provider = new anchor.AnchorProvider(connection, wallet, opts);
-    const program = new anchor.Program(IDL, program_id, provider);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
     let sourceOwner = keypair.publicKey;
 
     let bump: number;
@@ -769,7 +772,7 @@ program
 
     [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_CONFIG_SEED), sourceOwner.toBuffer()],
-      program_id,
+      programId,
     );
 
     const instructions = [
@@ -789,7 +792,7 @@ program
     const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
     recoverTx.sign(keypair);
 
-    console.log("Change operator successfully, retrieving config account info")
+    console.log("Change operator successfully, retrieving config account info");
     await connection.sendRawTransaction(recoverTx.serialize());
     const configAccountInfo = await program.account.config.fetch(configAccount);
     console.log(configAccountInfo);
