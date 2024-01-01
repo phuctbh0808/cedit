@@ -676,7 +676,7 @@ program
     const programId = new PublicKey(program_id);
     const program = new anchor.Program(IDL, programId, provider);
     let sourceOwner = keypair.publicKey;
-    let relendTokenMint = new PublicKey("2kNzm2v6KR5dpzgavS2nssLV9RxogVP6py2S6doJEfuZ");
+    let relendTokenMint = new PublicKey("Gt9oqTVmAwhrjBpS5j4Nc39fr9gCYArWxVXuHHc8QxnJ");
     if (cluster == "testnet") {
       relendTokenMint = new PublicKey("4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK");
     }
@@ -718,7 +718,7 @@ program
     console.log("source ATA: ", fromAta.address.toBase58());
     const instructions = [
       await program.methods
-        .supply(new BN(amount * 10 ** 0))
+        .supply(new BN(amount * 10 ** 9))
         .accounts({
           feePayer: sourceOwner,
           authority: sourceOwner,
