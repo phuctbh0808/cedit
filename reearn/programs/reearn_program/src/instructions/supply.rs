@@ -30,7 +30,7 @@ pub struct SupplyReward<'info> {
         associated_token::authority = vault
     )]
     pub vault_token_account: Account<'info, TokenAccount>,
-    #[account(address = RELEND_TEST)]
+    #[account(address = RELEND)]
     pub mint: Account<'info, Mint>,
     #[account(
         mut,

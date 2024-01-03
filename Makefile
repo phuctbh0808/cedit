@@ -10,6 +10,7 @@ CLUSTER ?= testnet
 
 export WALLET_PATH:=.wallets
 export PROGRAM_NAME?=relend-program
+export REEARN_PROGRAM?=reearn_program
 
 export CLUSTER_URL := $(if $(filter testnet,$(CLUSTER)),$(RENEC_TESTNET_URL),\
                  $(if $(filter mainnet,$(CLUSTER)),$(RENEC_MAINNET_URL),\
@@ -25,6 +26,14 @@ install-deps: show-network-config
 build: 
 	@$(MAKE) install-deps CLI_VERSION=$(CLI_VERSION) ANCHOR_VERSION=$(ANCHOR_VERSION)
 	@./scripts/build.sh "$(program_id)"
+
+build-re:
+	@$(MAKE) install-deps CLI_VERSION=1.14.6 ANCHOR_VERSION=0.25.0		
+	cd reearn && dev-scripts/build.sh "$(program_id)"
+
+deploy-re:
+	@$(MAKE) install-deps CLI_VERSION=$(CLI_VERSION)
+	cd reearn && dev-scripts/deploy.sh "$(deployer)" "$(program_id)"
 
 deploy: set-cluster-url
 	@./scripts/deploy.sh "$(deployer)"
