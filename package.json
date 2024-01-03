@@ -4,7 +4,8 @@
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
     "prettier-format": "prettier --config .prettierrc '**/**/*.ts' --write",
     "build": "tsc -p src",
-    "cli": "node dist/index.js"
+    "cli": "node dist/index.js",
+    "reearn": "node dist/borrow_to_earn_sample.js"
   },
   "dependencies": {
     "@project-serum/anchor": "0.24.2",
