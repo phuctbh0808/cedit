@@ -345,11 +345,8 @@ fn process_init_reserve(
         return Err(LendingError::InvalidOracleConfig.into());
     }
 
-    let (market_price, smoothed_market_price) = get_price(
-        oracle_price_info,
-        oracle_product_info,
-        clock,
-    )?;
+    let (market_price, smoothed_market_price) =
+        get_price(oracle_price_info, oracle_product_info, clock)?;
 
     let authority_signer_seeds = &[
         lending_market_info.key.as_ref(),
@@ -505,11 +502,7 @@ fn _refresh_reserve<'a>(
         return Err(LendingError::InvalidAccountInput.into());
     }
 
-    let (market_price, smoothed_market_price) = get_price(
-        price_info,
-        product_info,
-        clock,
-    )?;
+    let (market_price, smoothed_market_price) = get_price(price_info, product_info, clock)?;
     msg!("Market price: {}", market_price);
     msg!("Smoothed market price: {:?}", smoothed_market_price);
     reserve.liquidity.market_price = market_price;
@@ -1707,6 +1700,13 @@ fn process_borrow_obligation_liquidity(
                 authority_signer_seeds,
                 token_program: token_program_id.clone(),
             })?;
+
+            msg!(
+                "query::{}::host_fee: {}, host_fee_receiver: {}",
+                obligation_info.clone().key.to_string(),
+                host_fee,
+                host_fee_receiver_info.clone().key.to_string()
+            );
         }
     }
     if owner_fee > 0 {
@@ -1718,6 +1718,16 @@ fn process_borrow_obligation_liquidity(
             authority_signer_seeds,
             token_program: token_program_id.clone(),
         })?;
+
+        msg!(
+            "query::{}::borrow_fee: {}, borrow_fee_receiver: {}",
+            obligation_info.clone().key.to_string(),
+            borrow_fee,
+            borrow_reserve_liquidity_fee_receiver_info
+                .clone()
+                .key
+                .to_string()
+        );
     }
 
     spl_token_transfer(TokenTransferParams {
