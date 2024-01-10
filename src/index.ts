@@ -21,6 +21,7 @@ import {
   getAssociatedTokenAddress,
   TOKEN_PROGRAM_ID,
   ASSOCIATED_TOKEN_PROGRAM_ID,
+  transfer,
 } from "spl-token";
 import { BN } from "bn.js";
 import { RelendAction, RelendMarket } from "relend-adapter";
@@ -228,6 +229,7 @@ program
   .option("--deposit_limit <number>", "")
   .option("--added_borrow_weight_bps <number>", "")
   .option("--protocol_take_rate <number>", "")
+  .option("--gast_holder <string>", "")
   .action(async (params) => {
     let {
       program_id,
@@ -255,6 +257,7 @@ program
       deposit_limit,
       added_borrow_weight_bps,
       protocol_take_rate,
+      gast_holder,
     } = params;
 
     let reUSD = new PublicKey("USDbgSB1DPBCEDt15ppgTZZYiQokMHcvkX6JQRfVNJY");
@@ -387,6 +390,30 @@ program
           `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
         );
         return;
+      }
+      if (token_sympol.toUpperCase() === "GAST" && balance === 0) {
+        console.log("Transferring GAST to payer");
+
+        const gastHolderSourceKey = JSON.parse(fs.readFileSync(gast_holder));
+        const gastHolderKeypair = Keypair.fromSecretKey(Uint8Array.from(gastHolderSourceKey));
+
+        const gastHolderAta = await getOrCreateAssociatedTokenAccount(
+          connection,
+          gastHolderKeypair,
+          tokenProgramId,
+          gastHolderKeypair.publicKey,
+        );
+
+        const transferSignatures = await transfer(
+          connection,
+          gastHolderKeypair,
+          gastHolderAta.address,
+          ata.address,
+          gastHolderKeypair.publicKey,
+          LAMPORTS_PER_SOL
+        );
+
+        console.log("Transferred 1 GAST to payer, signatures: ", transferSignatures);
       }
 
       console.log("source owner address: ", sourceOwnerAta);
@@ -589,7 +616,7 @@ program
 program
   .command("set-lending-market-operator")
   .description("Set lending market operator")
-  .action(async (params) => {});
+  .action(async (params) => { });
 
 program
   .command("init-reearn-pool")
