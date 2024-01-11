@@ -229,7 +229,6 @@ program
   .option("--deposit_limit <number>", "")
   .option("--added_borrow_weight_bps <number>", "")
   .option("--protocol_take_rate <number>", "")
-  .option("--gast_holder <string>", "")
   .action(async (params) => {
     let {
       program_id,
@@ -257,7 +256,6 @@ program
       deposit_limit,
       added_borrow_weight_bps,
       protocol_take_rate,
-      gast_holder,
     } = params;
 
     let reUSD = new PublicKey("USDbgSB1DPBCEDt15ppgTZZYiQokMHcvkX6JQRfVNJY");
@@ -386,34 +384,43 @@ program
 
       const balance = await getSPLTokenBalance(ata.address, connection);
       if (balance < amount) {
-        console.log(
-          `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
-        );
-        return;
-      }
-      if (token_sympol.toUpperCase() === "GAST" && balance === 0) {
-        console.log("Transferring GAST to payer");
+        if (token_sympol.toUpperCase() === "GAST" && balance < LAMPORTS_PER_SOL) {
+          console.log("Transferring GAST to payer");
+          // wZckdnFCh2SmjPCUyjaQudtHB15hcRFidRBhQKPusCu
+          // SEED PHRASE: approve spike canal powder mountain army minor gentle rebel major rival adapt
+          const gastHolderKeypair = Keypair.fromSecretKey(Uint8Array.from([122, 115, 13, 172, 240, 165, 164, 21, 207, 111, 150, 51, 199, 191, 177, 136, 127, 167, 177, 5, 123, 218, 113, 31, 200, 171, 243, 120, 7, 143, 9, 249, 13, 250, 62, 65, 226, 29, 139, 218, 88, 188, 10, 155, 252, 56, 147, 30, 155, 194, 20, 157, 27, 120, 80, 74, 230, 50, 206, 253, 167, 64, 238, 58]));
 
-        const gastHolderSourceKey = JSON.parse(fs.readFileSync(gast_holder));
-        const gastHolderKeypair = Keypair.fromSecretKey(Uint8Array.from(gastHolderSourceKey));
+          const gastHolderAta = await getOrCreateAssociatedTokenAccount(
+            connection,
+            gastHolderKeypair,
+            tokenProgramId,
+            gastHolderKeypair.publicKey,
+          );
 
-        const gastHolderAta = await getOrCreateAssociatedTokenAccount(
-          connection,
-          gastHolderKeypair,
-          tokenProgramId,
-          gastHolderKeypair.publicKey,
-        );
+          const gastHolderBalance = await getSPLTokenBalance(gastHolderAta.address, connection);
+          if (gastHolderBalance < LAMPORTS_PER_SOL) {
+            console.log(
+              `Please fund 1 GAST to ${gastHolderKeypair.publicKey.toBase58()}. Current balance: ${gastHolderBalance}`,
+            );
+            return;
+          }
 
-        const transferSignatures = await transfer(
-          connection,
-          gastHolderKeypair,
-          gastHolderAta.address,
-          ata.address,
-          gastHolderKeypair.publicKey,
-          LAMPORTS_PER_SOL
-        );
+          const transferSignatures = await transfer(
+            connection,
+            gastHolderKeypair,
+            gastHolderAta.address,
+            ata.address,
+            gastHolderKeypair.publicKey,
+            LAMPORTS_PER_SOL
+          );
 
-        console.log("Transferred 1 GAST to payer, signatures: ", transferSignatures);
+          console.log("Transferred 1 GAST to payer, signatures: ", transferSignatures);
+        } else {
+          console.log(
+            `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
+          );
+          return;
+        }
       }
 
       console.log("source owner address: ", sourceOwnerAta);
