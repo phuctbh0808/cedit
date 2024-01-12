@@ -417,7 +417,7 @@ program
               gastHolderKeypair,
               gastHolderAta.address,
               ata.address,
-              gastHolderKeypair.publicKey,
+              gastHolderKeypair,
               1 * 10 ** tokenDecimals,
             );
 
