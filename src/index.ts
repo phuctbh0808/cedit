@@ -384,51 +384,10 @@ program
 
       const balance = await getSPLTokenBalance(ata.address, connection);
       if (balance < amount) {
-        if (token_sympol.toUpperCase() === "GAST") {
-          // When add `GAST` reserve, payer just need to have 1 GAST, if not, transfer 1 GAST to payer
-          if (balance < 1) {
-            console.log("Transferring GAST to payer");
-            // wZckdnFCh2SmjPCUyjaQudtHB15hcRFidRBhQKPusCu
-            // SEED PHRASE: approve spike canal powder mountain army minor gentle rebel major rival adapt
-            const gastHolderKeypair = Keypair.fromSecretKey(Uint8Array.from([
-              122, 115, 13, 172, 240, 165, 164, 21, 207, 111, 150, 51, 199, 191, 177, 136, 127, 167, 177, 5, 123, 218, 113, 31, 200, 171, 243, 120, 7, 143, 9, 249, 13, 250, 62, 65, 226, 29, 139, 218, 88, 188, 10, 155, 252, 56, 147, 30, 155, 194, 20, 157, 27, 120, 80, 74, 230, 50, 206, 253, 167, 64, 238, 58
-            ]));
-
-            const gastHolderAta = await getOrCreateAssociatedTokenAccount(
-              connection,
-              gastHolderKeypair,
-              tokenProgramId,
-              gastHolderKeypair.publicKey,
-            );
-
-            const gastHolderBalance = await getSPLTokenBalance(gastHolderAta.address, connection);
-            // GAST Holder must ensure that he has at least 1 GAST
-            if (gastHolderBalance < 1) {
-              console.log(
-                `Please fund 1 GAST to ${gastHolderKeypair.publicKey.toBase58()}. Current balance: ${gastHolderBalance}`,
-              );
-              return;
-            }
-
-            const tokenInfo = await connection.getTokenSupply(tokenProgramId);
-            const tokenDecimals = tokenInfo.value.decimals;
-            const transferSignatures = await transfer(
-              connection,
-              gastHolderKeypair,
-              gastHolderAta.address,
-              ata.address,
-              gastHolderKeypair,
-              1 * 10 ** tokenDecimals,
-            );
-
-            console.log("Transferred 1 GAST to payer, signatures: ", transferSignatures);
-          }
-        } else {
-          console.log(
-            `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
-          );
-          return;
-        }
+        console.log(
+          `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
+        );
+        return;
       }
 
       console.log("source owner address: ", sourceOwnerAta);
