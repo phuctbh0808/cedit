@@ -384,19 +384,10 @@ program
 
       const balance = await getSPLTokenBalance(ata.address, connection);
       if (balance < amount) {
-        if (token_sympol.toUpperCase() === "GAST") {
-          // When add `GAST` reserve, payer just need to have 1 GAST
-          if (balance < 1) {
-            console.log(
-              `Please fund 1 ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
-            );
-          }
-        } else {
-          console.log(
-            `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
-          );
-          return;
-        }
+        console.log(
+          `Please fund ${amount} ${token_sympol} to ${sourceOwner.toBase58()}. Current balance: ${balance}`,
+        );
+        return;
       }
 
       console.log("source owner address: ", sourceOwnerAta);
