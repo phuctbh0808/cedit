@@ -588,9 +588,41 @@ program
   });
 
 program
-  .command("set-lending-market-operator")
-  .description("Set lending market operator")
-  .action(async (params) => { });
+  .command("set-lending-market-risk-authority")
+  .description("Set lending market risk authority")
+  .option("--program_id <string>", "")
+  .option("--payer <string>", "")
+  .option("--risk_authority <string>", "")
+  .action(async (params) => {
+    let {
+      program_id,
+      payer,
+      risk_authority,
+    } = params;
+
+    console.log("Set lending market risk authority");
+    console.log("params:", params);
+
+    let exeParams = [
+      `--fee-payer ${payer}`,
+      `--risk_authority ${risk_authority}`,
+    ];
+
+    exeParams.push("--verbose");
+
+    const currentExeDir = path.join(__dirname, "..");
+    console.log("Execution folder: ", currentExeDir);
+    let exeCmd =
+      `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} set-lending-market-risk-authority ` +
+      exeParams.join(" ");
+    exec(exeCmd, { shell: "/bin/bash" }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`);
+      }
+      console.error("stderr: ", stderr);
+      console.log("stdout: ", stdout);
+    });
+  });
 
 program
   .command("init-reearn-pool")

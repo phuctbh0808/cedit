@@ -71,6 +71,10 @@ pub fn process_instruction(
                 accounts,
             )
         }
+        LendingInstruction::SetLendingMarketRiskAuthority { risk_authority } => {
+            msg!("Instruction: Set Lending Market Risk Authority");
+            process_set_lending_market_risk_authority(program_id, risk_authority, accounts)
+        }
         LendingInstruction::InitReserve {
             liquidity_amount,
             config,
@@ -257,6 +261,36 @@ fn process_set_lending_market_owner_and_config(
     }
 
     lending_market.whitelisted_liquidator = whitelisted_liquidator;
+
+    LendingMarket::pack(lending_market, &mut lending_market_info.data.borrow_mut())?;
+
+    Ok(())
+}
+
+fn process_set_lending_market_risk_authority(
+    program_id: &Pubkey,
+    risk_authority: Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let lending_market_info = next_account_info(account_info_iter)?;
+    let lending_market_owner_info = next_account_info(account_info_iter)?;
+
+    let mut lending_market = LendingMarket::unpack(&lending_market_info.data.borrow())?;
+    if lending_market_info.owner != program_id {
+        msg!("Lending market provided is not owned by the lending program");
+        return Err(LendingError::InvalidAccountOwner.into());
+    }
+    if &lending_market.owner != lending_market_owner_info.key {
+        msg!("Lending market owner does not match the lending market owner provided");
+        return Err(LendingError::InvalidMarketOwner.into());
+    }
+    if !lending_market_owner_info.is_signer {
+        msg!("Lending market owner provided must be a signer");
+        return Err(LendingError::InvalidSigner.into());
+    }
+
+    lending_market.risk_authority = risk_authority;
 
     LendingMarket::pack(lending_market, &mut lending_market_info.data.borrow_mut())?;
 
@@ -2272,7 +2306,8 @@ fn process_update_reserve_config(
         return Err(LendingError::InvalidSigner.into());
     }
 
-    if signer_info.key == &lending_market.owner {
+    if signer_info.key == &lending_market.owner || signer_info.key == &lending_market.risk_authority
+    {
         // if window duration or max outflow are different, then create a new rate limiter instance.
         if rate_limiter_config != reserve.rate_limiter.config {
             reserve.rate_limiter = RateLimiter::new(rate_limiter_config, Clock::get()?.slot);
@@ -2293,21 +2328,21 @@ fn process_update_reserve_config(
         }
 
         reserve.config = config;
-    } else if signer_info.key == &lending_market.risk_authority {
-        // only can disable outflows
-        if rate_limiter_config.window_duration > 0 && rate_limiter_config.max_outflow == 0 {
-            reserve.rate_limiter = RateLimiter::new(rate_limiter_config, Clock::get()?.slot);
-        }
+    // } else if signer_info.key == &lending_market.risk_authority {
+    // only can disable outflows
+    // if rate_limiter_config.window_duration > 0 && rate_limiter_config.max_outflow == 0 {
+    //     reserve.rate_limiter = RateLimiter::new(rate_limiter_config, Clock::get()?.slot);
+    // }
 
-        // only certain reserve config fields can be changed by the risk authority, and only in the
-        // safer direction for now
-        if config.borrow_limit < reserve.config.borrow_limit {
-            reserve.config.borrow_limit = config.borrow_limit;
-        }
+    // only certain reserve config fields can be changed by the risk authority, and only in the
+    // safer direction for now
+    // if config.borrow_limit < reserve.config.borrow_limit {
+    //     reserve.config.borrow_limit = config.borrow_limit;
+    // }
 
-        if config.deposit_limit < reserve.config.deposit_limit {
-            reserve.config.deposit_limit = config.deposit_limit;
-        }
+    // if config.deposit_limit < reserve.config.deposit_limit {
+    //     reserve.config.deposit_limit = config.deposit_limit;
+    // }
     } else if *signer_info.key == relend_market_owner::id()
     // 5ph has the ability to change the
     // fees on permissionless markets
@@ -2957,13 +2992,9 @@ fn get_price(
     clock: &Clock,
 ) -> Result<(Decimal, Option<Decimal>), ProgramError> {
     match get_oracle_price(price_account_info, product_account_info, clock) {
-        Ok((market_price, ema_price)) => {
-            Ok((market_price, Some(ema_price)))
-        }
-        Err(error) => {
-            Err(error.into())
-        }
-    }    
+        Ok((market_price, ema_price)) => Ok((market_price, Some(ema_price))),
+        Err(error) => Err(error.into()),
+    }
 }
 
 /// Issue a spl_token `InitializeAccount` instruction.
