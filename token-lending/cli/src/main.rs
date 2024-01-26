@@ -1,10 +1,6 @@
 use lending_state::RelendState;
-use solana_account_decoder::UiAccountEncoding;
-use solana_client::rpc_config::{RpcProgramAccountsConfig, RpcSendTransactionConfig};
-use solana_client::{rpc_config::RpcAccountInfoConfig, rpc_filter::RpcFilterType};
-use solana_sdk::{commitment_config::CommitmentLevel, compute_budget::ComputeBudgetInstruction};
 use relend_program::{
-    instruction::set_lending_market_owner_and_config,
+    instruction::{set_lending_market_owner_and_config, set_lending_market_risk_authority},
     state::{validate_reserve_config, RateLimiterConfig},
 };
 use relend_sdk::{
@@ -15,6 +11,10 @@ use relend_sdk::{
     state::Obligation,
     state::ReserveType,
 };
+use solana_account_decoder::UiAccountEncoding;
+use solana_client::rpc_config::{RpcProgramAccountsConfig, RpcSendTransactionConfig};
+use solana_client::{rpc_config::RpcAccountInfoConfig, rpc_filter::RpcFilterType};
+use solana_sdk::{commitment_config::CommitmentLevel, compute_budget::ComputeBudgetInstruction};
 
 mod lending_state;
 
@@ -22,6 +22,12 @@ use {
     clap::{
         crate_description, crate_name, crate_version, value_t, App, AppSettings, Arg, ArgMatches,
         SubCommand,
+    },
+    relend_sdk::{
+        self,
+        instruction::{init_lending_market, init_reserve, update_reserve_config},
+        math::WAD,
+        state::{LendingMarket, Reserve, ReserveConfig, ReserveFees},
     },
     solana_clap_utils::{
         fee_payer::fee_payer_arg,
@@ -38,12 +44,6 @@ use {
         signature::{Keypair, Signer},
         system_instruction,
         transaction::Transaction,
-    },
-    relend_sdk::{
-        self,
-        instruction::{init_lending_market, init_reserve, update_reserve_config},
-        math::WAD,
-        state::{LendingMarket, Reserve, ReserveConfig, ReserveFees},
     },
     spl_token::{
         amount_to_ui_amount,
@@ -101,7 +101,7 @@ struct PartialReserveConfig {
     pub fee_receiver: Option<Pubkey>,
     /// Cut of the liquidation bonus that the protocol receives, in deca bps
     pub protocol_liquidation_fee: Option<u8>,
-    /// Protocol take rate is the amount borrowed interest protocol recieves, as a percentage  
+    /// Protocol take rate is the amount borrowed interest protocol recieves, as a percentage
     pub protocol_take_rate: Option<u8>,
     /// Rate Limiter's max window size
     pub rate_limiter_window_duration: Option<u64>,
@@ -975,6 +975,37 @@ fn main() {
                         .help("Reserve type"),
                 )
         )
+        .subcommand(
+            SubCommand::with_name("set-lending-market-risk-authority")
+                .about("Set lending market risk authority")
+                .arg(
+                    Arg::with_name("lending_market_owner")
+                        .long("lending-market-owner")
+                        .validator(is_keypair)
+                        .value_name("KEYPAIR")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Owner of the lending market"),
+                )
+                .arg(
+                    Arg::with_name("lending_market")
+                        .long("market")
+                        .validator(is_pubkey)
+                        .value_name("PUBKEY")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Lending market address"),
+                )
+                .arg(
+                    Arg::with_name("risk_authority")
+                        .long("risk-authority")
+                        .validator(is_pubkey)
+                        .value_name("PUBKEY")
+                        .takes_value(true)
+                        .required(false)
+                        .help("Risk authority address"),
+                )
+        )
         .get_matches();
 
     let mut wallet_manager = None;
@@ -1291,6 +1322,18 @@ fn main() {
                 reserve_pubkey,
                 lending_market_pubkey,
                 lending_market_owner_keypair,
+            )
+        }
+        ("set-lending-market-risk-authority", Some(arg_matches)) => {
+            let lending_market_owner_keypair =
+                keypair_of(arg_matches, "lending_market_owner").unwrap();
+            let lending_market_pubkey = pubkey_of(arg_matches, "lending_market").unwrap();
+            let risk_authority_pubkey = pubkey_of(arg_matches, "risk_authority").unwrap();
+            command_set_lending_market_risk_authority(
+                &mut config,
+                lending_market_pubkey,
+                lending_market_owner_keypair,
+                risk_authority_pubkey,
             )
         }
         _ => unreachable!(),
@@ -2196,6 +2239,39 @@ fn command_update_reserve(
             new_pyth_product_pubkey,
             reserve.liquidity.oracle_pubkey,
             reserve.liquidity.second_oracle_pubkey,
+        )],
+        Some(&config.fee_payer.pubkey()),
+        &recent_blockhash,
+    );
+
+    let transaction = Transaction::new(
+        &vec![config.fee_payer.as_ref(), &lending_market_owner_keypair],
+        message,
+        recent_blockhash,
+    );
+
+    send_transaction(config, transaction)?;
+    Ok(())
+}
+
+#[allow(clippy::too_many_arguments)]
+fn command_set_lending_market_risk_authority(
+    config: &mut Config,
+    lending_market_pubkey: Pubkey,
+    lending_market_owner_keypair: Keypair,
+    risk_authority_pubkey: Pubkey,
+) -> CommandResult {
+    let lending_market_info = config.rpc_client.get_account(&lending_market_pubkey)?;
+    let lending_market = LendingMarket::unpack_from_slice(lending_market_info.data.borrow())?;
+    println!("{:#?}", lending_market);
+
+    let recent_blockhash = config.rpc_client.get_latest_blockhash()?;
+    let message = Message::new_with_blockhash(
+        &[set_lending_market_risk_authority(
+            config.lending_program_id,
+            lending_market_pubkey,
+            lending_market_owner_keypair.pubkey(),
+            risk_authority_pubkey,
         )],
         Some(&config.fee_payer.pubkey()),
         &recent_blockhash,

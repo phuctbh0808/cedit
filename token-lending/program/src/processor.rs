@@ -71,6 +71,10 @@ pub fn process_instruction(
                 accounts,
             )
         }
+        LendingInstruction::SetLendingMarketRiskAuthority { risk_authority } => {
+            msg!("Instruction: Set Lending Market Risk Authority");
+            process_set_lending_market_risk_authority(program_id, risk_authority, accounts)
+        }
         LendingInstruction::InitReserve {
             liquidity_amount,
             config,
@@ -257,6 +261,36 @@ fn process_set_lending_market_owner_and_config(
     }
 
     lending_market.whitelisted_liquidator = whitelisted_liquidator;
+
+    LendingMarket::pack(lending_market, &mut lending_market_info.data.borrow_mut())?;
+
+    Ok(())
+}
+
+fn process_set_lending_market_risk_authority(
+    program_id: &Pubkey,
+    risk_authority: Pubkey,
+    accounts: &[AccountInfo],
+) -> ProgramResult {
+    let account_info_iter = &mut accounts.iter();
+    let lending_market_info = next_account_info(account_info_iter)?;
+    let lending_market_owner_info = next_account_info(account_info_iter)?;
+
+    let mut lending_market = LendingMarket::unpack(&lending_market_info.data.borrow())?;
+    if lending_market_info.owner != program_id {
+        msg!("Lending market provided is not owned by the lending program");
+        return Err(LendingError::InvalidAccountOwner.into());
+    }
+    if &lending_market.owner != lending_market_owner_info.key {
+        msg!("Lending market owner does not match the lending market owner provided");
+        return Err(LendingError::InvalidMarketOwner.into());
+    }
+    if !lending_market_owner_info.is_signer {
+        msg!("Lending market owner provided must be a signer");
+        return Err(LendingError::InvalidSigner.into());
+    }
+
+    lending_market.risk_authority = risk_authority;
 
     LendingMarket::pack(lending_market, &mut lending_market_info.data.borrow_mut())?;
 
@@ -2308,6 +2342,15 @@ fn process_update_reserve_config(
         if config.deposit_limit < reserve.config.deposit_limit {
             reserve.config.deposit_limit = config.deposit_limit;
         }
+
+        reserve.config.fees.borrow_fee_wad = config.fees.borrow_fee_wad;
+        reserve.config.optimal_utilization_rate = config.optimal_utilization_rate;
+        reserve.config.max_utilization_rate = config.max_utilization_rate;
+        reserve.config.min_borrow_rate = config.min_borrow_rate;
+        reserve.config.optimal_borrow_rate = config.optimal_borrow_rate;
+        reserve.config.max_borrow_rate = config.max_borrow_rate;
+        reserve.config.added_borrow_weight_bps = config.added_borrow_weight_bps;
+        reserve.config.protocol_take_rate = config.protocol_take_rate;
     } else if *signer_info.key == relend_market_owner::id()
     // 5ph has the ability to change the
     // fees on permissionless markets
@@ -2957,13 +3000,9 @@ fn get_price(
     clock: &Clock,
 ) -> Result<(Decimal, Option<Decimal>), ProgramError> {
     match get_oracle_price(price_account_info, product_account_info, clock) {
-        Ok((market_price, ema_price)) => {
-            Ok((market_price, Some(ema_price)))
-        }
-        Err(error) => {
-            Err(error.into())
-        }
-    }    
+        Ok((market_price, ema_price)) => Ok((market_price, Some(ema_price))),
+        Err(error) => Err(error.into()),
+    }
 }
 
 /// Issue a spl_token `InitializeAccount` instruction.

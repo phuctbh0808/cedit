@@ -498,6 +498,18 @@ pub enum LendingInstruction {
     /// Must be a pda with seeds [lending_market, "MetaData"]
     /// 3. `[]` System program
     UpdateMarketMetadata,
+
+    // 23
+    /// Set the new Risk Authority of a lending market.
+    ///
+    /// Accounts expected by this instruction:
+    ///
+    ///   0. `[writable]` Lending market account.
+    ///   1. `[signer]` Current owner.
+    SetLendingMarketRiskAuthority {
+        /// The new risk authority
+        risk_authority: Pubkey,
+    },
 }
 
 impl LendingInstruction {
@@ -962,6 +974,10 @@ impl LendingInstruction {
             }
             // special handling for this instruction, bc the instruction is too big to deserialize
             Self::UpdateMarketMetadata => {}
+            Self::SetLendingMarketRiskAuthority { risk_authority } => {
+                buf.push(23);
+                buf.extend_from_slice(risk_authority.as_ref());
+            }
         }
         buf
     }
@@ -1685,5 +1701,22 @@ pub fn update_market_metadata(
             AccountMeta::new_readonly(system_program::id(), false),
         ],
         data: data.to_vec(),
+    }
+}
+
+/// Creates a 'SetLendingMarketRiskAuthority' instruction.
+pub fn set_lending_market_risk_authority(
+    program_id: Pubkey,
+    lending_market_pubkey: Pubkey,
+    lending_market_owner: Pubkey,
+    risk_authority: Pubkey,
+) -> Instruction {
+    Instruction {
+        program_id,
+        accounts: vec![
+            AccountMeta::new(lending_market_pubkey, false),
+            AccountMeta::new_readonly(lending_market_owner, true),
+        ],
+        data: LendingInstruction::SetLendingMarketRiskAuthority { risk_authority }.pack(),
     }
 }
