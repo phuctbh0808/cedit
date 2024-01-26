@@ -2306,8 +2306,7 @@ fn process_update_reserve_config(
         return Err(LendingError::InvalidSigner.into());
     }
 
-    if signer_info.key == &lending_market.owner || signer_info.key == &lending_market.risk_authority
-    {
+    if signer_info.key == &lending_market.owner {
         // if window duration or max outflow are different, then create a new rate limiter instance.
         if rate_limiter_config != reserve.rate_limiter.config {
             reserve.rate_limiter = RateLimiter::new(rate_limiter_config, Clock::get()?.slot);
@@ -2328,21 +2327,30 @@ fn process_update_reserve_config(
         }
 
         reserve.config = config;
-    // } else if signer_info.key == &lending_market.risk_authority {
-    // only can disable outflows
-    // if rate_limiter_config.window_duration > 0 && rate_limiter_config.max_outflow == 0 {
-    //     reserve.rate_limiter = RateLimiter::new(rate_limiter_config, Clock::get()?.slot);
-    // }
+    } else if signer_info.key == &lending_market.risk_authority {
+        // only can disable outflows
+        if rate_limiter_config.window_duration > 0 && rate_limiter_config.max_outflow == 0 {
+            reserve.rate_limiter = RateLimiter::new(rate_limiter_config, Clock::get()?.slot);
+        }
 
-    // only certain reserve config fields can be changed by the risk authority, and only in the
-    // safer direction for now
-    // if config.borrow_limit < reserve.config.borrow_limit {
-    //     reserve.config.borrow_limit = config.borrow_limit;
-    // }
+        // only certain reserve config fields can be changed by the risk authority, and only in the
+        // safer direction for now
+        if config.borrow_limit < reserve.config.borrow_limit {
+            reserve.config.borrow_limit = config.borrow_limit;
+        }
 
-    // if config.deposit_limit < reserve.config.deposit_limit {
-    //     reserve.config.deposit_limit = config.deposit_limit;
-    // }
+        if config.deposit_limit < reserve.config.deposit_limit {
+            reserve.config.deposit_limit = config.deposit_limit;
+        }
+
+        reserve.config.fees.borrow_fee_wad = config.fees.borrow_fee_wad;
+        reserve.config.optimal_utilization_rate = config.optimal_utilization_rate;
+        reserve.config.max_utilization_rate = config.max_utilization_rate;
+        reserve.config.min_borrow_rate = config.min_borrow_rate;
+        reserve.config.optimal_borrow_rate = config.optimal_borrow_rate;
+        reserve.config.max_borrow_rate = config.max_borrow_rate;
+        reserve.config.added_borrow_weight_bps = config.added_borrow_weight_bps;
+        reserve.config.protocol_take_rate = config.protocol_take_rate;
     } else if *signer_info.key == relend_market_owner::id()
     // 5ph has the ability to change the
     // fees on permissionless markets

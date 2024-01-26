@@ -592,26 +592,73 @@ program
   .description("Set lending market risk authority")
   .option("--program_id <string>", "")
   .option("--payer <string>", "")
-  .option("--risk_authority <string>", "")
+  .option("--lending_market_owner <string>", "Owner of the lending market")
+  .option("--lending_market <string>", "Lending market address")
+  .option("--risk_authority <string>", "Risk authority address")
   .action(async (params) => {
     let {
       program_id,
       payer,
+      lending_market_owner,
+      lending_market,
       risk_authority,
     } = params;
 
     console.log("Set lending market risk authority");
     console.log("params:", params);
 
+    if (!PublicKey.isOnCurve((new PublicKey(risk_authority)).toBase58()) || PublicKey.isOnCurve(risk_authority)) {
+      console.error("Invalid risk authority address");
+      return;
+    };
+
+    const currentExeDir = path.join(__dirname, "..");
+    console.log("Execution folder: ", currentExeDir);
+    // Check if risk authority is already set
+    // Get current market info
+    let viewMarketExecParams = [
+      `--market ${lending_market}`,
+    ];
+    let viewMarketExecCmd =
+      `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} view-market ` +
+      viewMarketExecParams.join(" ");
+    exec(viewMarketExecCmd, { shell: "/bin/bash" }, (error, stdout, stderr) => {
+      if (error) {
+        console.error(`Error: ${error.message}`);
+        return;
+      }
+      // Get risk authority from stdout, the stdout format is like:
+      // ```
+      //    ...
+      //       whitelisted_liquidator: None,
+      //       risk_authority: AjunQwCmBcbB7XxvieLToVdWBxbK5vBDFp93ctBdfZve,
+      //     },
+      //   )
+      // ```
+      // Using regex to get risk authority, get the substring between "risk_authority: " and
+      // the first "," after it.
+      let match = stdout.match(/risk_authority: (.*?),/);
+      if (match && match[1]) {
+        let resultString = match[1];
+        if (resultString == risk_authority) {
+          console.log("Risk authority is already set to ", risk_authority);
+          return;
+        }
+      } else {
+        console.log("Failed to get risk authority from lending market");
+      }
+    });
+
+
     let exeParams = [
       `--fee-payer ${payer}`,
+      `--lending-market-owner ${lending_market_owner}`,
+      `--lending-market ${lending_market}`,
       `--risk_authority ${risk_authority}`,
     ];
 
     exeParams.push("--verbose");
 
-    const currentExeDir = path.join(__dirname, "..");
-    console.log("Execution folder: ", currentExeDir);
     let exeCmd =
       `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} set-lending-market-risk-authority ` +
       exeParams.join(" ");
