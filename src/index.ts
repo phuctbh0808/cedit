@@ -592,22 +592,22 @@ program
   .description("Set lending market risk authority")
   .option("--program_id <string>", "")
   .option("--payer <string>", "")
-  .option("--lending_market_owner <string>", "Owner of the lending market")
-  .option("--lending_market <string>", "Lending market address")
+  .option("--market_owner <string>", "Owner of the lending market")
+  .option("--market <string>", "Lending market address")
   .option("--risk_authority <string>", "Risk authority address")
   .action(async (params) => {
     let {
       program_id,
       payer,
-      lending_market_owner,
-      lending_market,
+      market_owner,
+      market,
       risk_authority,
     } = params;
 
     console.log("Set lending market risk authority");
     console.log("params:", params);
 
-    if (!PublicKey.isOnCurve((new PublicKey(risk_authority)).toBase58()) || PublicKey.isOnCurve(risk_authority)) {
+    if (!PublicKey.isOnCurve((new PublicKey(risk_authority)).toBase58()) || !PublicKey.isOnCurve(risk_authority)) {
       console.error("Invalid risk authority address");
       return;
     };
@@ -617,7 +617,7 @@ program
     // Check if risk authority is already set
     // Get current market info
     let viewMarketExecParams = [
-      `--market ${lending_market}`,
+      `--market ${market}`,
     ];
     let viewMarketExecCmd =
       `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} view-market ` +
@@ -652,9 +652,9 @@ program
 
     let exeParams = [
       `--fee-payer ${payer}`,
-      `--lending-market-owner ${lending_market_owner}`,
-      `--lending-market ${lending_market}`,
-      `--risk_authority ${risk_authority}`,
+      `--market-owner ${market_owner}`,
+      `--market ${market}`,
+      `--risk-authority ${risk_authority}`,
     ];
 
     exeParams.push("--verbose");

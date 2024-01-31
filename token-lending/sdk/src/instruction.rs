@@ -725,6 +725,10 @@ impl LendingInstruction {
                 Self::ForgiveDebt { liquidity_amount }
             }
             22 => Self::UpdateMarketMetadata,
+            23 => {
+                let (risk_authority, _rest) = Self::unpack_pubkey(rest)?;
+                Self::SetLendingMarketRiskAuthority { risk_authority }
+            }
             _ => {
                 msg!("Instruction cannot be unpacked");
                 return Err(LendingError::InstructionUnpackError.into());

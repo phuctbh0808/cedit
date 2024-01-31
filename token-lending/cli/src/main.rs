@@ -980,7 +980,7 @@ fn main() {
                 .about("Set lending market risk authority")
                 .arg(
                     Arg::with_name("lending_market_owner")
-                        .long("lending-market-owner")
+                        .long("market-owner")
                         .validator(is_keypair)
                         .value_name("KEYPAIR")
                         .takes_value(true)
