@@ -11,14 +11,15 @@
     "@project-serum/anchor": "0.24.2",
     "@renec-foundation/oracle-sdk": "^0.1.2",
     "base-64": "^1.0.0",
+    "bignumber.js": "^9.0.2",
     "bs58": "^5.0.0",
     "commander": "^11.1.0",
     "dotenv": "^16.3.1",
     "figlet": "^1.6.0",
+    "fs": "^0.0.1-security",
     "nodemon": "^3.0.1",
     "relend-adapter": "^0.0.60",
-    "spl-token": "npm:@solana/spl-token@0.2.0",
-    "bignumber.js": "^9.0.2"
+    "spl-token": "npm:@solana/spl-token@0.2.0"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",

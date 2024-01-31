@@ -18,7 +18,7 @@ use solana_sdk::{
 };
 
 #[tokio::test]
-async fn test_success() {
+async fn test_set_lending_market_risk_authority_successfully() {
     let mut test = ProgramTest::new(
         "relend_program",
         relend_program::id(),
@@ -55,7 +55,7 @@ async fn test_success() {
 }
 
 #[tokio::test]
-async fn test_invalid_owner() {
+async fn test_fail_set_lending_market_risk_authority_with_invalid_owner() {
     let mut test = ProgramTest::new(
         "relend_program",
         relend_program::id(),
@@ -93,7 +93,7 @@ async fn test_invalid_owner() {
 }
 
 #[tokio::test]
-async fn test_owner_not_signer() {
+async fn test_fail_set_lending_market_risk_authority_with_owner_not_signer() {
     let mut test = ProgramTest::new(
         "relend_program",
         relend_program::id(),
