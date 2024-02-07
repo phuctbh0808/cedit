@@ -57,4 +57,24 @@ pub mod reearn_program {
     pub fn supply(ctx: Context<SupplyReward>, amount: u64) -> ProgramResult {
         supply::exec(ctx, amount)
     }
+
+    pub fn init_reserve_reward(
+        ctx: Context<InitReserveReward>,
+        reserve: Pubkey,
+        reward: Pubkey,
+        apy: f32,
+        token_decimals: u8,
+    ) -> ProgramResult {
+        init_reserve_reward::exec(ctx, reserve, reward, apy, token_decimals)
+    }
+
+    pub fn supply_to_earn(
+        ctx: Context<SupplyToEarn>,
+        obligation: Pubkey,
+        wallet: Pubkey,
+        reserve: Pubkey,
+        total_liquidity_amount: u64,
+    ) -> ProgramResult {
+        supply_to_earn::exec(ctx, obligation, wallet, reserve, total_liquidity_amount)
+    }
 }

@@ -291,6 +291,112 @@ export type ReearnProgram = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "initReserveReward",
+      "accounts": [
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "configAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "reserve",
+          "type": "publicKey"
+        },
+        {
+          "name": "reward",
+          "type": "publicKey"
+        },
+        {
+          "name": "apy",
+          "type": "f32"
+        },
+        {
+          "name": "tokenDecimals",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "supplyToEarn",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "reserveReward",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "configAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
+          "name": "wallet",
+          "type": "publicKey"
+        },
+        {
+          "name": "reserve",
+          "type": "publicKey"
+        },
+        {
+          "name": "totalLiquidityAmount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -367,6 +473,66 @@ export type ReearnProgram = {
           },
           {
             "name": "maxRewardPerObligation",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "reserveReward",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "obligationId",
+            "type": "publicKey"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "reserve",
+            "type": "publicKey"
+          },
+          {
+            "name": "accumulatedRewardAmount",
+            "type": "u64"
+          },
+          {
+            "name": "lastSupply",
+            "type": "i64"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
+            "name": "supplyAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "supplyApy",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserve",
+            "type": "publicKey"
+          },
+          {
+            "name": "apy",
+            "type": "f32"
+          },
+          {
+            "name": "rewardToken",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenDecimals",
             "type": "u8"
           }
         ]
@@ -705,6 +871,112 @@ export const IDL: ReearnProgram = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "initReserveReward",
+      "accounts": [
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "configAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "reserve",
+          "type": "publicKey"
+        },
+        {
+          "name": "reward",
+          "type": "publicKey"
+        },
+        {
+          "name": "apy",
+          "type": "f32"
+        },
+        {
+          "name": "tokenDecimals",
+          "type": "u8"
+        }
+      ]
+    },
+    {
+      "name": "supplyToEarn",
+      "accounts": [
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "reserveReward",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "configAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
+          "name": "wallet",
+          "type": "publicKey"
+        },
+        {
+          "name": "reserve",
+          "type": "publicKey"
+        },
+        {
+          "name": "totalLiquidityAmount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -781,6 +1053,66 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "maxRewardPerObligation",
+            "type": "u8"
+          }
+        ]
+      }
+    },
+    {
+      "name": "reserveReward",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "obligationId",
+            "type": "publicKey"
+          },
+          {
+            "name": "owner",
+            "type": "publicKey"
+          },
+          {
+            "name": "reserve",
+            "type": "publicKey"
+          },
+          {
+            "name": "accumulatedRewardAmount",
+            "type": "u64"
+          },
+          {
+            "name": "lastSupply",
+            "type": "i64"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
+          },
+          {
+            "name": "supplyAmount",
+            "type": "u64"
+          }
+        ]
+      }
+    },
+    {
+      "name": "supplyApy",
+      "type": {
+        "kind": "struct",
+        "fields": [
+          {
+            "name": "reserve",
+            "type": "publicKey"
+          },
+          {
+            "name": "apy",
+            "type": "f32"
+          },
+          {
+            "name": "rewardToken",
+            "type": "publicKey"
+          },
+          {
+            "name": "tokenDecimals",
             "type": "u8"
           }
         ]

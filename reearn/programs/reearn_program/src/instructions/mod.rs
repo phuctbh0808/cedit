@@ -5,6 +5,8 @@ pub mod refresh_reward;
 pub mod register_for_earn;
 pub mod claim_reward;
 pub mod supply;
+pub mod init_reserve_reward;
+pub mod supply_to_earn;
 
 pub use initialize::*;
 pub use change_operator::*;
@@ -13,3 +15,5 @@ pub use refresh_reward::*;
 pub use register_for_earn::*;
 pub use claim_reward::*;
 pub use supply::*;
+pub use init_reserve_reward::*;
+pub use supply_to_earn::*;
