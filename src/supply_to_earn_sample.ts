@@ -62,6 +62,7 @@ let configAccount: PublicKey;
 let vaultAccount: PublicKey;
 let obligationAccount: PublicKey;
 let supplyApyAccount: PublicKey;
+let reserveAccount: PublicKey;
 const alice: Keypair = anchor.web3.Keypair.fromSecretKey(
   bs58.decode(
     "3Lw6ZYDey5YLK7kDhdJrjuDAFNVQFvjhu5UpDcUnkmJ1DEZdVcgEy53ht5DTdWdTBLRfcywdhmWoJuwQstphLvu4",
@@ -70,10 +71,13 @@ const alice: Keypair = anchor.web3.Keypair.fromSecretKey(
 const CONFIG_SEED = "supernova";
 const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
 const VAULT_SEED = "onepiece";
+const RESERVE_SEED = "bersek3r";
 const RELEND_MINT = "4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK";
 let vaultBump: number;
 let supplyApyBump: number;
+let reserveBump: number;
 const reserve = new PublicKey("7Tv3jFyW6efL8VVrmqLUkfuA3USpgMdAae9WxFtQHhYC");
+const obligation = new PublicKey("7Tv3jFyW6efL8VVrmqLUkfuA3USpgMdAae9WxFtQHhYG");
 
 let initializeFn = async () => {
   let bump: number;
@@ -159,37 +163,42 @@ let initializeFn = async () => {
 //   await connection.sendRawTransaction(recoverTx.serialize());
 // };
 
-// let registerForEarnFn = async () => {
-//   let bump: number;
-//   [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(CONFIG_SEED), payerAccount.toBuffer()],
-//     programId,
-//   );
-//   [obligationAccount, obligationBump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(SUPPLY_REWARD_SEED), obligation.toBuffer()],
-//     programId,
-//   );
+let supplyToEarnFn = async () => {
+  let bump: number;
+  [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(CONFIG_SEED), payerAccount.toBuffer()],
+    programId,
+  );
+  [reserveAccount, reserveBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(RESERVE_SEED), reserve.toBuffer()],
+    programId,
+  );
+  [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
+    programId,
+  );
 
-//   const instructions = [
-//     await program.methods
-//       .registerForEarn(obligation, alice.publicKey)
-//       .accounts({
-//         authority: payerAccount,
-//         obligationReward: obligationAccount,
-//         configAccount,
-//         systemProgram: SystemProgram.programId,
-//       })
-//       .instruction(),
-//   ];
+  const instructions = [
+    await program.methods
+      .supplyToEarn(obligation, alice.publicKey, reserve, new BN(10000))
+      .accounts({
+        authority: payerAccount,
+        reserveReward: reserveAccount,
+        supplyApy: supplyApyAccount,
+        configAccount,
+        systemProgram: SystemProgram.programId,
+      })
+      .instruction(),
+  ];
 
-//   const tx = new Transaction().add(...instructions);
-//   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-//   tx.feePayer = payerAccount;
-//   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-//   recoverTx.sign(payer);
+  const tx = new Transaction().add(...instructions);
+  tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+  tx.feePayer = payerAccount;
+  const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+  recoverTx.sign(payer);
 
-//   await connection.sendRawTransaction(recoverTx.serialize());
-// };
+  await connection.sendRawTransaction(recoverTx.serialize());
+};
 
 // let refreshRewardFn = async () => {
 //   let bump: number;
