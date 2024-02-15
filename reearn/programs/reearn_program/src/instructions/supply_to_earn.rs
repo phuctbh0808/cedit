@@ -2,7 +2,7 @@ use crate::{constants::*, errors::ReearnErrorCode, state::*};
 use anchor_lang::prelude::*;
 
 #[derive(Accounts)]
-#[instruction(reserve: Pubkey)]
+#[instruction(obligation: Pubkey, wallet: Pubkey, reserve: Pubkey)]
 pub struct SupplyToEarn<'info> {
     #[account(
         mut,
@@ -10,7 +10,7 @@ pub struct SupplyToEarn<'info> {
     pub authority: Signer<'info>,
     #[account(
         init_if_needed,
-        seeds = [RESERVE_REWARD_SEED, reserve.as_ref()],
+        seeds = [RESERVE_REWARD_SEED, reserve.as_ref(), obligation.as_ref()],
         bump,
         payer = authority,
         space = ReserveReward::LEN,
