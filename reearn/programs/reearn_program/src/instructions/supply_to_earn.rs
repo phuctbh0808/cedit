@@ -55,7 +55,7 @@ pub fn exec(
         require!(reserve_reward.obligation_id == obligation, ReearnErrorCode::WrongObligation);
     
         let current_reward = supply_apy.calculate_reward(reserve_reward.supply_amount, clock.unix_timestamp - reserve_reward.last_supply);
-        reserve_reward.accumulated_reward_amount += current_reward;
+        reserve_reward.accumulated_reward_amount = reserve_reward.accumulated_reward_amount.checked_add(current_reward).unwrap();
         reserve_reward.last_supply = clock.unix_timestamp;
         reserve_reward.supply_amount = total_liquidity_amount;
     }

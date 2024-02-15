@@ -53,7 +53,7 @@ const secretKey = Uint8Array.from(secretByte);
 const keypair = web3.Keypair.fromSecretKey(secretKey);
 const wallet = new Wallet(keypair);
 const provider = new AnchorProvider(connection, wallet, opts);
-const programId = new PublicKey("AbXeeV2bPhaAM2DZ5tboUzPDEt9Pe5HvAms6UvHcSoLv");
+const programId = new PublicKey("B8DbGSZpQroi4qpUV1Cu8jMWzAQUUtY34ESs1ysSUESX");
 const program = new anchor.Program(IDL, programId, provider);
 const payer = (provider.wallet as anchor.Wallet).payer;
 const payerAccount = payer.publicKey;
@@ -76,8 +76,8 @@ const RELEND_MINT = "4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK";
 let vaultBump: number;
 let supplyApyBump: number;
 let reserveBump: number;
-const reserve = new PublicKey("7Tv3jFyW6efL8VVrmqLUkfuA3USpgMdAae9WxFtQHhYC");
-const obligation = new PublicKey("7Tv3jFyW6efL8VVrmqLUkfuA3USpgMdAae9WxFtQHhYG");
+const reserve = new PublicKey("2RbgMCDxwFn5HdrjoW2rJPcj6wStFRRPhguAgLnb9y69");
+const obligation = new PublicKey("AVAxHAFMNPKZZuoSYGf7Xo8foW7wxDqjRAT8hwsrqWuo");
 
 let initializeFn = async () => {
   let bump: number;
@@ -91,10 +91,6 @@ let initializeFn = async () => {
     programId,
   );
 
-  [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from(VAULT_SEED), supplyApyAccount.toBuffer()],
-    programId,
-  );
   const instructions = [
     await program.methods
       .initReserveReward(reserve, new PublicKey(RELEND_MINT), 100, 9)
@@ -103,9 +99,7 @@ let initializeFn = async () => {
         authority: payerAccount,
         supplyApy: supplyApyAccount,
         configAccount,
-        vault: vaultAccount,
         systemProgram: SystemProgram.programId,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
       })
       .instruction(),
   ];
@@ -178,11 +172,12 @@ let supplyToEarnFn = async () => {
     programId,
   );
 
+  console.log(reserveAccount.toBase58(), supplyApyAccount.toBase58(), configAccount.toBase58());
   const instructions = [
     await program.methods
       .supplyToEarn(obligation, alice.publicKey, reserve, new BN(10000))
       .accounts({
-        authority: payerAccount,
+        authority: alice.publicKey,
         reserveReward: reserveAccount,
         supplyApy: supplyApyAccount,
         configAccount,
@@ -193,9 +188,9 @@ let supplyToEarnFn = async () => {
 
   const tx = new Transaction().add(...instructions);
   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-  tx.feePayer = payerAccount;
+  tx.feePayer = alice.publicKey;
   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-  recoverTx.sign(payer);
+  recoverTx.sign(alice);
 
   await connection.sendRawTransaction(recoverTx.serialize());
 };
@@ -280,10 +275,10 @@ let supplyToEarnFn = async () => {
 // };
 
 let fetchSupplyAPY = async () => {
-  // [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
-  //   [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
-  //   programId,
-  // );
+  [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
+    programId,
+  );
   const rewardInfo = await program.account.supplyApy.all();
   console.log(rewardInfo);
 };

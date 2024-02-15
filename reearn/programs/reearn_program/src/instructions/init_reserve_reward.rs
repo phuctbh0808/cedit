@@ -12,7 +12,7 @@ pub struct InitReserveReward<'info> {
     )]
     pub authority: Signer<'info>,
     #[account(
-        init,
+        init_if_needed,
         seeds = [SUPPLY_APY_SEED, reserve.as_ref()],
         bump,
         payer = authority,
@@ -25,23 +25,20 @@ pub struct InitReserveReward<'info> {
         bump = config_account.bump[0],
     )]
     pub config_account: Account<'info, Config>,
-    #[account(
-        init,
-        owner = supply_apy.key(),
-        seeds = [VAULT_SEED, supply_apy.key().as_ref()],
-        bump,
-        payer = fee_payer,
-        space = 0,
-    )]
-    /// CHECK: general account for vault
-    pub vault: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
-    pub rent: Sysvar<'info, Rent>,
 }
 
 pub fn exec(ctx: Context<InitReserveReward>, reserve: Pubkey, reward: Pubkey, apy: f32, token_decimals: u8) -> ProgramResult {
     let supply_apy = &mut ctx.accounts.supply_apy;
-    supply_apy.init(reserve, reward, apy, token_decimals);
+    msg!("Supply APY account address is: {:?}", supply_apy.key());
+    if !supply_apy.initialized {
+        supply_apy.initialized = true;
+        supply_apy.reserve = reserve;
+        supply_apy.reward_token = reward;
+        supply_apy.token_decimals = token_decimals;
+        supply_apy.apy = apy;
+    }
 
+    msg!("Supply APY account is initialized: {:?}", supply_apy);
     Ok(())
 }

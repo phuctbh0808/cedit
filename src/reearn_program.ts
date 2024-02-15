@@ -316,17 +316,7 @@ export type ReearnProgram = {
           "isSigner": false
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -534,6 +524,10 @@ export type ReearnProgram = {
           {
             "name": "tokenDecimals",
             "type": "u8"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
           }
         ]
       }
@@ -896,17 +890,7 @@ export const IDL: ReearnProgram = {
           "isSigner": false
         },
         {
-          "name": "vault",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "rent",
           "isMut": false,
           "isSigner": false
         }
@@ -1114,6 +1098,10 @@ export const IDL: ReearnProgram = {
           {
             "name": "tokenDecimals",
             "type": "u8"
+          },
+          {
+            "name": "initialized",
+            "type": "bool"
           }
         ]
       }
