@@ -17,7 +17,7 @@ impl ReserveReward {
 
 #[account]
 #[derive(Debug)]
-pub struct SupplyAPY {
+pub struct SupplyApy {
     pub reserve: Pubkey,
     pub apy: f32,
     pub reward_token: Pubkey,
@@ -25,7 +25,7 @@ pub struct SupplyAPY {
     pub initialized: bool,
 }
 
-impl SupplyAPY {
+impl SupplyApy {
     pub const LEN: usize = 8 + 32 + 4 + 32 + 1 + 1;
 
     pub fn calculate_reward(&self, supply_amount: u64, time: i64) -> u64 {

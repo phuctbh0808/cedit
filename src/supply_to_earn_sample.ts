@@ -53,7 +53,7 @@ const secretKey = Uint8Array.from(secretByte);
 const keypair = web3.Keypair.fromSecretKey(secretKey);
 const wallet = new Wallet(keypair);
 const provider = new AnchorProvider(connection, wallet, opts);
-const programId = new PublicKey("B8DbGSZpQroi4qpUV1Cu8jMWzAQUUtY34ESs1ysSUESX");
+const programId = new PublicKey("AbXeeV2bPhaAM2DZ5tboUzPDEt9Pe5HvAms6UvHcSoLv");
 const program = new anchor.Program(IDL, programId, provider);
 const payer = (provider.wallet as anchor.Wallet).payer;
 const payerAccount = payer.publicKey;
@@ -76,7 +76,7 @@ const RELEND_MINT = "4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK";
 let vaultBump: number;
 let supplyApyBump: number;
 let reserveBump: number;
-const reserve = new PublicKey("2RbgMCDxwFn5HdrjoW2rJPcj6wStFRRPhguAgLnb9y69");
+const reserve = new PublicKey("2RbgMCDxwFn5HdrjoW2rJPcj6wStFRRPhguAgLnb9y66");
 const obligation = new PublicKey("AVAxHAFMNPKZZuoSYGf7Xo8foW7wxDqjRAT8hwsrqWuo");
 
 let initializeFn = async () => {
@@ -177,7 +177,7 @@ let supplyToEarnFn = async () => {
     await program.methods
       .supplyToEarn(obligation, alice.publicKey, reserve, new BN(10000))
       .accounts({
-        authority: alice.publicKey,
+        authority: payer.publicKey,
         reserveReward: reserveAccount,
         supplyApy: supplyApyAccount,
         configAccount,
@@ -188,9 +188,9 @@ let supplyToEarnFn = async () => {
 
   const tx = new Transaction().add(...instructions);
   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-  tx.feePayer = alice.publicKey;
+  tx.feePayer = payer.publicKey;
   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-  recoverTx.sign(alice);
+  recoverTx.sign(payer);
 
   await connection.sendRawTransaction(recoverTx.serialize());
 };
@@ -275,10 +275,10 @@ let supplyToEarnFn = async () => {
 // };
 
 let fetchSupplyAPY = async () => {
-  [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
-    [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
-    programId,
-  );
+  // [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+  //   [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
+  //   programId,
+  // );
   const rewardInfo = await program.account.supplyApy.all();
   console.log(rewardInfo);
 };

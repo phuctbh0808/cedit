@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 
-declare_id!("B8DbGSZpQroi4qpUV1Cu8jMWzAQUUtY34ESs1ysSUESX");
+declare_id!("AbXeeV2bPhaAM2DZ5tboUzPDEt9Pe5HvAms6UvHcSoLv");
 
 pub mod constants;
 pub mod reward_token;

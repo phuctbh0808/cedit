@@ -21,7 +21,7 @@ pub struct SupplyToEarn<'info> {
         seeds = [SUPPLY_APY_SEED, reserve.as_ref()],
         bump,
     )]
-    pub supply_apy: Account<'info, SupplyAPY>,
+    pub supply_apy: Account<'info, SupplyApy>,
     #[account(
         mut,
         seeds = [CONFIG_SEED, config_account.admin.as_ref()],
