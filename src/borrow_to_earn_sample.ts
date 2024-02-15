@@ -126,7 +126,7 @@ let supplyFn = async () => {
   console.log(fromAta.address.toBase58());
   const instructions = [
     await program.methods
-      .supply(new BN(10000 * 10 ** 9))
+      .supply(new BN(800 * 10 ** 9))
       .accounts({
         feePayer: payerAccount,
         authority: payerAccount,
@@ -282,7 +282,7 @@ let fetchConfigFn = async () => {
   console.log(configAccountInfo);
 };
 
-initializeFn()
+supplyFn()
   .then(() => {
     console.log("Finished successfully");
     process.exit(0);

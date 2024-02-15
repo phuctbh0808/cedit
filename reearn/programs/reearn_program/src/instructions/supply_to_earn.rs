@@ -53,6 +53,7 @@ pub fn exec(
         let supply_apy = &ctx.accounts.supply_apy;
         require!(reserve_reward.owner == wallet, ReearnErrorCode::WrongWallet);
         require!(reserve_reward.obligation_id == obligation, ReearnErrorCode::WrongObligation);
+        require!(reserve_reward.reserve == reserve, ReearnErrorCode::WrongReserve);
     
         let current_reward = supply_apy.calculate_reward(reserve_reward.supply_amount, clock.unix_timestamp - reserve_reward.last_supply);
         reserve_reward.accumulated_reward_amount = reserve_reward.accumulated_reward_amount.checked_add(current_reward).unwrap();

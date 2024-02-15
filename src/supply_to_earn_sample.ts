@@ -9,34 +9,16 @@ import {
   sendAndConfirmTransaction,
   SystemProgram,
   Transaction,
-  AccountInfo,
-  clusterApiUrl,
 } from "@solana/web3.js";
 import BN from "bn.js";
 import web3 from "@solana/web3.js";
 import bs58 from "bs58";
 import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
   getOrCreateAssociatedTokenAccount,
 } from "spl-token";
 
-const transferSol = async (
-  connection: Connection,
-  from: Keypair,
-  to: PublicKey,
-  amount: number,
-) => {
-  const tx = new Transaction().add(
-    SystemProgram.transfer({
-      fromPubkey: from.publicKey,
-      toPubkey: to,
-      lamports: LAMPORTS_PER_SOL * amount,
-    }),
-  );
-  await sendAndConfirmTransaction(connection, tx, [from]);
-};
 const opts: anchor.web3.ConfirmOptions = {
   preflightCommitment: "processed",
   commitment: "processed",
@@ -113,50 +95,6 @@ let initializeFn = async () => {
   await connection.sendRawTransaction(recoverTx.serialize());
 };
 
-// let supplyFn = async () => {
-//   let bump: number;
-//   [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(CONFIG_SEED), payerAccount.toBuffer()],
-//     programId,
-//   );
-//   [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(VAULT_SEED), configAccount.toBuffer()],
-//     programId,
-//   );
-
-//   const mint = new PublicKey(RELEND_MINT);
-//   const vaultAta = await getAssociatedTokenAddress(mint, vaultAccount, true);
-//   console.log(vaultAta.toBase58());
-//   const fromAta = await getOrCreateAssociatedTokenAccount(connection, keypair, mint, payerAccount);
-//   console.log(fromAta.address.toBase58());
-//   const instructions = [
-//     await program.methods
-//       .supply(new BN(10000 * 10 ** 9))
-//       .accounts({
-//         feePayer: payerAccount,
-//         authority: payerAccount,
-//         tokenAccount: fromAta.address,
-//         vault: vaultAccount,
-//         vaultTokenAccount: vaultAta,
-//         mint: mint,
-//         configAccount,
-//         tokenProgram: TOKEN_PROGRAM_ID,
-//         systemProgram: SystemProgram.programId,
-//         associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-//         rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-//       })
-//       .instruction(),
-//   ];
-
-//   const tx = new Transaction().add(...instructions);
-//   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-//   tx.feePayer = payerAccount;
-//   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-//   recoverTx.sign(payer);
-
-//   await connection.sendRawTransaction(recoverTx.serialize());
-// };
-
 let supplyToEarnFn = async () => {
   let bump: number;
   [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -195,90 +133,58 @@ let supplyToEarnFn = async () => {
   await connection.sendRawTransaction(recoverTx.serialize());
 };
 
-// let refreshRewardFn = async () => {
-//   let bump: number;
-//   [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(CONFIG_SEED), payerAccount.toBuffer()],
-//     programId,
-//   );
-//   [obligationAccount, obligationBump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(SUPPLY_REWARD_SEED), obligation.toBuffer()],
-//     programId,
-//   );
+let claimRewardFn = async () => {
+  let bump: number;
+  [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(CONFIG_SEED), payerAccount.toBuffer()],
+    programId,
+  );
+  [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(VAULT_SEED), configAccount.toBuffer()],
+    programId,
+  );
+  [reserveAccount, reserveBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(RESERVE_SEED), reserve.toBuffer(), obligation.toBuffer()],
+    programId,
+  );
+  [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
+    programId,
+  );
 
-//   const instructions = [
-//     await program.methods
-//       .refreshReward(obligation, alice.publicKey, new BN(3), 0)
-//       .accounts({
-//         authority: payerAccount,
-//         obligationReward: obligationAccount,
-//         configAccount,
-//       })
-//       .instruction(),
-//   ];
+  const mint = new PublicKey(RELEND_MINT);
+  const vaultAta = await getAssociatedTokenAddress(mint, vaultAccount, true);
+  const toAta = await getOrCreateAssociatedTokenAccount(connection, user1, mint, user1.publicKey);
 
-//   const tx = new Transaction().add(...instructions);
-//   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-//   tx.feePayer = payerAccount;
-//   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-//   recoverTx.sign(payer);
+  const instructions = [
+    await program.methods
+      .claimSteReward(obligation, user1.publicKey, reserve, new BN(10))
+      .accounts({
+        feePayer: user1.publicKey,
+        authority: user1.publicKey,
+        tokenAccount: toAta.address,
+        vault: vaultAccount,
+        vaultTokenAccount: vaultAta,
+        mint: mint,
+        reserveReward: reserveAccount,
+        supplyApy: supplyApyAccount,
+        configAccount,
+        tokenProgram: TOKEN_PROGRAM_ID,
+      })
+      .instruction(),
+  ];
 
-//   await connection.sendRawTransaction(recoverTx.serialize());
-//   await fetchObligationRewardsFn();
-// };
+  const tx = new Transaction().add(...instructions);
+  tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+  tx.feePayer = user1.publicKey;
+  const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+  recoverTx.sign(user1);
 
-// let claimRewardFn = async () => {
-//   let bump: number;
-//   [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(CONFIG_SEED), payerAccount.toBuffer()],
-//     programId,
-//   );
-//   [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(VAULT_SEED), configAccount.toBuffer()],
-//     programId,
-//   );
-//   [obligationAccount, obligationBump] = anchor.web3.PublicKey.findProgramAddressSync(
-//     [Buffer.from(SUPPLY_REWARD_SEED), obligation.toBuffer()],
-//     programId,
-//   );
-
-//   const mint = new PublicKey(RELEND_MINT);
-//   const vaultAta = await getAssociatedTokenAddress(mint, vaultAccount, true);
-//   const toAta = await getOrCreateAssociatedTokenAccount(connection, alice, mint, alice.publicKey);
-
-//   const instructions = [
-//     await program.methods
-//       .claimReward(obligation, alice.publicKey)
-//       .accounts({
-//         feePayer: alice.publicKey,
-//         authority: alice.publicKey,
-//         tokenAccount: toAta.address,
-//         vault: vaultAccount,
-//         vaultTokenAccount: vaultAta,
-//         mint: mint,
-//         obligationReward: obligationAccount,
-//         configAccount,
-//         tokenProgram: TOKEN_PROGRAM_ID,
-//       })
-//       .instruction(),
-//   ];
-
-//   const tx = new Transaction().add(...instructions);
-//   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-//   tx.feePayer = alice.publicKey;
-//   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-//   recoverTx.sign(alice);
-
-//   let hash = await connection.sendRawTransaction(recoverTx.serialize());
-//   console.log(hash);
-//   await fetchObligationRewardsFn();
-// };
+  let hash = await connection.sendRawTransaction(recoverTx.serialize());
+  console.log(hash);
+};
 
 let fetchSupplyAPY = async () => {
-  // [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
-  //   [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
-  //   programId,
-  // );
   const rewardInfo = await program.account.supplyApy.all();
   console.log(rewardInfo);
 };

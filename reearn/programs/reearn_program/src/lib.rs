@@ -77,4 +77,14 @@ pub mod reearn_program {
     ) -> ProgramResult {
         supply_to_earn::exec(ctx, obligation, wallet, reserve, total_liquidity_amount)
     }
+
+    pub fn claim_ste_reward(
+        ctx: Context<ClaimReserveReward>,
+        obligation: Pubkey,
+        wallet: Pubkey,
+        reserve: Pubkey,
+        remain_liquidity_amount: u64,
+    ) -> ProgramResult {
+        claim_ste_reward::exec(ctx, obligation, wallet, reserve, remain_liquidity_amount)
+    }
 }

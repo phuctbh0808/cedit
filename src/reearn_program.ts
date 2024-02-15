@@ -387,6 +387,79 @@ export type ReearnProgram = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "claimSteReward",
+      "accounts": [
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserveReward",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "configAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
+          "name": "wallet",
+          "type": "publicKey"
+        },
+        {
+          "name": "reserve",
+          "type": "publicKey"
+        },
+        {
+          "name": "remainLiquidityAmount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -565,6 +638,9 @@ export type ReearnProgram = {
           },
           {
             "name": "AlreadyClaimedToday"
+          },
+          {
+            "name": "WrongReserve"
           }
         ]
       }
@@ -961,6 +1037,79 @@ export const IDL: ReearnProgram = {
           "type": "u64"
         }
       ]
+    },
+    {
+      "name": "claimSteReward",
+      "accounts": [
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "authority",
+          "isMut": false,
+          "isSigner": true
+        },
+        {
+          "name": "tokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vault",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "vaultTokenAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mint",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserveReward",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "configAccount",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
+          "name": "wallet",
+          "type": "publicKey"
+        },
+        {
+          "name": "reserve",
+          "type": "publicKey"
+        },
+        {
+          "name": "remainLiquidityAmount",
+          "type": "u64"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1139,6 +1288,9 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "AlreadyClaimedToday"
+          },
+          {
+            "name": "WrongReserve"
           }
         ]
       }

@@ -7,6 +7,7 @@ pub mod claim_reward;
 pub mod supply;
 pub mod init_reserve_reward;
 pub mod supply_to_earn;
+pub mod claim_ste_reward;
 
 pub use initialize::*;
 pub use change_operator::*;
@@ -17,3 +18,4 @@ pub use claim_reward::*;
 pub use supply::*;
 pub use init_reserve_reward::*;
 pub use supply_to_earn::*;
+pub use claim_ste_reward::*;
