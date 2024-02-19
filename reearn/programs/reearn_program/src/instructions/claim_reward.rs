@@ -1,7 +1,7 @@
 use crate::{constants::*, errors::ReearnErrorCode, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{TokenAccount, Mint, Token, Transfer, self};
-use crate::reward_token::*;
+use crate::id::*;
 
 #[derive(Accounts)]
 #[instruction(obligation: Pubkey)]

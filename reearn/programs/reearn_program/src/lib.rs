@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-declare_id!("B8DbGSZpQroi4qpUV1Cu8jMWzAQUUtY34ESs1ysSUESX");
+declare_id!("3PLoeNAqCbGQWMQRm9fFMb2kfwaSQbrLnn613gFFQswT");
 
 pub mod constants;
-pub mod reward_token;
+pub mod id;
 pub mod errors;
 pub mod instructions;
 pub mod state;
@@ -70,21 +70,17 @@ pub mod reearn_program {
 
     pub fn supply_to_earn(
         ctx: Context<SupplyToEarn>,
-        obligation: Pubkey,
         wallet: Pubkey,
         reserve: Pubkey,
-        total_liquidity_amount: u64,
     ) -> ProgramResult {
-        supply_to_earn::exec(ctx, obligation, wallet, reserve, total_liquidity_amount)
+        supply_to_earn::exec(ctx, wallet, reserve)
     }
 
     pub fn claim_ste_reward(
         ctx: Context<ClaimReserveReward>,
-        obligation: Pubkey,
         wallet: Pubkey,
         reserve: Pubkey,
-        remain_liquidity_amount: u64,
     ) -> ProgramResult {
-        claim_ste_reward::exec(ctx, obligation, wallet, reserve, remain_liquidity_amount)
+        claim_ste_reward::exec(ctx, wallet, reserve)
     }
 }

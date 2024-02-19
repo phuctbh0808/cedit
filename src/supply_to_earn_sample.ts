@@ -35,14 +35,13 @@ const secretKey = Uint8Array.from(secretByte);
 const keypair = web3.Keypair.fromSecretKey(secretKey);
 const wallet = new Wallet(keypair);
 const provider = new AnchorProvider(connection, wallet, opts);
-const programId = new PublicKey("B8DbGSZpQroi4qpUV1Cu8jMWzAQUUtY34ESs1ysSUESX");
+const programId = new PublicKey("3PLoeNAqCbGQWMQRm9fFMb2kfwaSQbrLnn613gFFQswT");
 const program = new anchor.Program(IDL, programId, provider);
 const payer = (provider.wallet as anchor.Wallet).payer;
 const payerAccount = payer.publicKey;
-
+console.log(payerAccount.toBase58());
 let configAccount: PublicKey;
 let vaultAccount: PublicKey;
-let obligationAccount: PublicKey;
 let supplyApyAccount: PublicKey;
 let reserveAccount: PublicKey;
 const user1: Keypair = anchor.web3.Keypair.fromSecretKey(
@@ -58,8 +57,8 @@ const RELEND_MINT = "4JRe6jvgeXCcQwsxQY3StUcwnrCRKrTcWS4pHjtkpWrK";
 let vaultBump: number;
 let supplyApyBump: number;
 let reserveBump: number;
-const reserve = new PublicKey("CdSZ1E3UPZDrE4ucjxiw4bx19Yfn9YgNZ2HTjM16erfJ");
-const obligation = new PublicKey("AVAxHAFMNPKZZuoSYGf7Xo8foW7wxDqjRAT8hwsrqWuo");
+const reserve = new PublicKey("2RbgMCDxwFn5HdrjoW2rJPcj6wStFRRPhguAgLnb9y62");
+const obligation = new PublicKey("A8KGMXzdMN9oJLBrcVhCpBy9tCdZGP7MEG6UiyXwbrQV");
 
 let initializeFn = async () => {
   let bump: number;
@@ -75,7 +74,7 @@ let initializeFn = async () => {
 
   const instructions = [
     await program.methods
-      .initReserveReward(reserve, new PublicKey(RELEND_MINT), 200, 9)
+      .initReserveReward(reserve, new PublicKey(RELEND_MINT), 2.0, 9)
       .accounts({
         feePayer: payerAccount,
         authority: payerAccount,
@@ -113,12 +112,13 @@ let supplyToEarnFn = async () => {
   console.log(reserveAccount.toBase58(), supplyApyAccount.toBase58(), configAccount.toBase58());
   const instructions = [
     await program.methods
-      .supplyToEarn(obligation, user1.publicKey, reserve, new BN(10000))
+      .supplyToEarn(new PublicKey("AX3SRJDbGw4QSpMNyWubTQhUV1sww7qsPAy12K3aHrtb"), reserve)
       .accounts({
-        authority: user1.publicKey,
+        authority: payer.publicKey,
         reserveReward: reserveAccount,
         supplyApy: supplyApyAccount,
         configAccount,
+        obligation,
         systemProgram: SystemProgram.programId,
       })
       .instruction(),
@@ -126,9 +126,9 @@ let supplyToEarnFn = async () => {
 
   const tx = new Transaction().add(...instructions);
   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-  tx.feePayer = user1.publicKey;
+  tx.feePayer = payer.publicKey;
   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-  recoverTx.sign(user1);
+  recoverTx.sign(payer);
 
   await connection.sendRawTransaction(recoverTx.serialize());
 };
@@ -154,18 +154,19 @@ let claimRewardFn = async () => {
 
   const mint = new PublicKey(RELEND_MINT);
   const vaultAta = await getAssociatedTokenAddress(mint, vaultAccount, true);
-  const toAta = await getOrCreateAssociatedTokenAccount(connection, user1, mint, user1.publicKey);
+  const toAta = await getOrCreateAssociatedTokenAccount(connection, payer, mint, payer.publicKey);
 
   const instructions = [
     await program.methods
-      .claimSteReward(obligation, user1.publicKey, reserve, new BN(10))
+      .claimSteReward(new PublicKey("AX3SRJDbGw4QSpMNyWubTQhUV1sww7qsPAy12K3aHrtb"), reserve)
       .accounts({
-        feePayer: user1.publicKey,
-        authority: user1.publicKey,
+        feePayer: payer.publicKey,
+        authority: payer.publicKey,
         tokenAccount: toAta.address,
         vault: vaultAccount,
         vaultTokenAccount: vaultAta,
-        mint: mint,
+        mint,
+        obligation,
         reserveReward: reserveAccount,
         supplyApy: supplyApyAccount,
         configAccount,
@@ -176,9 +177,9 @@ let claimRewardFn = async () => {
 
   const tx = new Transaction().add(...instructions);
   tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-  tx.feePayer = user1.publicKey;
+  tx.feePayer = payer.publicKey;
   const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-  recoverTx.sign(user1);
+  recoverTx.sign(payer);
 
   let hash = await connection.sendRawTransaction(recoverTx.serialize());
   console.log(hash);
@@ -203,7 +204,7 @@ let fetchReserveRewardFn = async () => {
   console.log(await program.account.reserveReward.all());
 }
 
-fetchReserveRewardFn()
+supplyToEarnFn()
   .then(() => {
     console.log("Finished successfully");
     process.exit(0);

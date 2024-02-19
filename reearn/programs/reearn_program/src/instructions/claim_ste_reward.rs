@@ -1,9 +1,11 @@
-use crate::{constants::*, errors::ReearnErrorCode, state::*};
+use crate::{constants::*, errors::ReearnErrorCode, id::{RELEND_PROGRAM}, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{TokenAccount, Mint, Token, Transfer, self};
+use relend_sdk::state::Obligation;
+use solana_program::program_pack::{IsInitialized, Pack};
 
 #[derive(Accounts)]
-#[instruction(obligation: Pubkey, wallet: Pubkey, reserve: Pubkey)]
+#[instruction(wallet: Pubkey, reserve: Pubkey)]
 pub struct ClaimReserveReward<'info> {
     #[account(mut)]
     fee_payer: Signer<'info>,
@@ -31,11 +33,13 @@ pub struct ClaimReserveReward<'info> {
         associated_token::authority = vault
     )]
     pub vault_token_account: Account<'info, TokenAccount>,
-    #[account()]
+    #[account(address = supply_apy.reward_token @ ReearnErrorCode::WrongRewardToken)]
     pub mint: Account<'info, Mint>,
+    /// CHECK: general account for obligation
+    pub obligation: AccountInfo<'info>,
     #[account(
         mut,
-        seeds = [RESERVE_REWARD_SEED, reserve.as_ref(), obligation.as_ref()],
+        seeds = [RESERVE_REWARD_SEED, reserve.as_ref(), obligation.key.as_ref()],
         bump,
     )]
     pub reserve_reward: Account<'info, ReserveReward>,
@@ -55,18 +59,22 @@ pub struct ClaimReserveReward<'info> {
 
 pub fn exec(
     ctx: Context<ClaimReserveReward>,
-    obligation: Pubkey,
     wallet: Pubkey,
     reserve: Pubkey,
-    remain_liquidity_amount: u64,
 ) -> ProgramResult {
+    msg!("Checking obligation owner");
+    let obligation_info = &ctx.accounts.obligation;
+    if *obligation_info.owner != RELEND_PROGRAM {
+        msg!("Obligation provided is not owned by the lending program");
+        return Err(ReearnErrorCode::InvalidAccountOwner.into());
+    }
+    
     let reserve_reward = &mut ctx.accounts.reserve_reward;
     let supply_apy = &ctx.accounts.supply_apy;
-
     let clock = &Clock::get()?;
 
     require!(
-        reserve_reward.obligation_id == obligation,
+        reserve_reward.obligation_id == *obligation_info.key,
         ReearnErrorCode::WrongObligation
     );
     require!(
@@ -78,20 +86,33 @@ pub fn exec(
         ReearnErrorCode::WrongReserve
     );
 
-    let current_reward = supply_apy.calculate_reward(reserve_reward.supply_amount, clock.unix_timestamp - reserve_reward.last_supply);
-    let total_claim_reward = reserve_reward.accumulated_reward_amount.checked_add(current_reward).unwrap();
-    reserve_reward.last_supply = clock.unix_timestamp;
-    reserve_reward.accumulated_reward_amount = 0;
-    reserve_reward.supply_amount = remain_liquidity_amount;
+    msg!("Unpacking obligation data");
+    let obligation = Obligation::unpack(&obligation_info.data.borrow())?;
+    msg!("Checking obligation initialized");
+    if !obligation.is_initialized() {
+        msg!("Obligation is not initialized");
+        return Err(ReearnErrorCode::WrongObligation.into());
+    }
 
+    msg!("Finding collateral in deposits");
+    let (collateral, _)  = obligation.find_collateral_in_deposits(reserve)?;
+    
+    msg!("Calculating reward");
+    let supply_amount = collateral.deposited_amount.checked_div(
+        10u64.checked_pow(9).ok_or(ReearnErrorCode::MathOverflow)?
+    ).ok_or(ReearnErrorCode::MathOverflow)?;
+    let current_reward = supply_apy.calculate_reward(supply_amount, clock.unix_timestamp - reserve_reward.last_supply);
+    let total_claim_reward = reserve_reward.accumulated_reward_amount + current_reward;
+    reserve_reward.last_supply = clock.unix_timestamp;
+    reserve_reward.accumulated_reward_amount = 0.0;
+
+    msg!("Preparing reward transfer");
     let billion = 10u64;
     let reward_decimals = billion
         .checked_pow(supply_apy.token_decimals as u32)
         .ok_or(ReearnErrorCode::MathOverflow)?;
 
-    let calculated_reward = total_claim_reward
-        .checked_mul(reward_decimals)
-        .ok_or(ReearnErrorCode::MathOverflow)?;
+    let calculated_reward = (total_claim_reward * (reward_decimals as f64)) as u64;
 
     let destination = &ctx.accounts.token_account;
     let source = &ctx.accounts.vault_token_account;

@@ -364,11 +364,6 @@ export type ReearnProgram = {
           "isSigner": false
         },
         {
-          "name": "obligation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -376,12 +371,20 @@ export type ReearnProgram = {
       ],
       "args": [
         {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
           "name": "wallet",
           "type": "publicKey"
         },
         {
           "name": "reserve",
           "type": "publicKey"
+        },
+        {
+          "name": "totalLiquidityAmount",
+          "type": "u64"
         }
       ]
     },
@@ -419,11 +422,6 @@ export type ReearnProgram = {
           "isSigner": false
         },
         {
-          "name": "obligation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "reserveReward",
           "isMut": true,
           "isSigner": false
@@ -446,12 +444,20 @@ export type ReearnProgram = {
       ],
       "args": [
         {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
           "name": "wallet",
           "type": "publicKey"
         },
         {
           "name": "reserve",
           "type": "publicKey"
+        },
+        {
+          "name": "remainLiquidityAmount",
+          "type": "u64"
         }
       ]
     }
@@ -554,7 +560,7 @@ export type ReearnProgram = {
           },
           {
             "name": "accumulatedRewardAmount",
-            "type": "f64"
+            "type": "u64"
           },
           {
             "name": "lastSupply",
@@ -563,6 +569,10 @@ export type ReearnProgram = {
           {
             "name": "initialized",
             "type": "bool"
+          },
+          {
+            "name": "supplyAmount",
+            "type": "u64"
           }
         ]
       }
@@ -634,9 +644,6 @@ export type ReearnProgram = {
           },
           {
             "name": "WrongRewardToken"
-          },
-          {
-            "name": "InvalidAccountOwner"
           }
         ]
       }
@@ -1010,11 +1017,6 @@ export const IDL: ReearnProgram = {
           "isSigner": false
         },
         {
-          "name": "obligation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -1022,12 +1024,20 @@ export const IDL: ReearnProgram = {
       ],
       "args": [
         {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
           "name": "wallet",
           "type": "publicKey"
         },
         {
           "name": "reserve",
           "type": "publicKey"
+        },
+        {
+          "name": "totalLiquidityAmount",
+          "type": "u64"
         }
       ]
     },
@@ -1065,11 +1075,6 @@ export const IDL: ReearnProgram = {
           "isSigner": false
         },
         {
-          "name": "obligation",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "reserveReward",
           "isMut": true,
           "isSigner": false
@@ -1092,12 +1097,20 @@ export const IDL: ReearnProgram = {
       ],
       "args": [
         {
+          "name": "obligation",
+          "type": "publicKey"
+        },
+        {
           "name": "wallet",
           "type": "publicKey"
         },
         {
           "name": "reserve",
           "type": "publicKey"
+        },
+        {
+          "name": "remainLiquidityAmount",
+          "type": "u64"
         }
       ]
     }
@@ -1200,7 +1213,7 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "accumulatedRewardAmount",
-            "type": "f64"
+            "type": "u64"
           },
           {
             "name": "lastSupply",
@@ -1209,6 +1222,10 @@ export const IDL: ReearnProgram = {
           {
             "name": "initialized",
             "type": "bool"
+          },
+          {
+            "name": "supplyAmount",
+            "type": "u64"
           }
         ]
       }
@@ -1280,9 +1297,6 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "WrongRewardToken"
-          },
-          {
-            "name": "InvalidAccountOwner"
           }
         ]
       }

@@ -53,7 +53,7 @@ const secretKey = Uint8Array.from(secretByte);
 const keypair = web3.Keypair.fromSecretKey(secretKey);
 const wallet = new Wallet(keypair);
 const provider = new AnchorProvider(connection, wallet, opts);
-const programId = new PublicKey("B8DbGSZpQroi4qpUV1Cu8jMWzAQUUtY34ESs1ysSUESX");
+const programId = new PublicKey("3PLoeNAqCbGQWMQRm9fFMb2kfwaSQbrLnn613gFFQswT");
 const program = new anchor.Program(IDL, programId, provider);
 const payer = (provider.wallet as anchor.Wallet).payer;
 const payerAccount = payer.publicKey;
@@ -119,37 +119,39 @@ let supplyFn = async () => {
     programId,
   );
 
-  const mint = new PublicKey(RELENT_MINT);
-  const vaultAta = await getAssociatedTokenAddress(mint, vaultAccount, true);
-  console.log(vaultAta.toBase58());
-  const fromAta = await getOrCreateAssociatedTokenAccount(connection, keypair, mint, payerAccount);
-  console.log(fromAta.address.toBase58());
-  const instructions = [
-    await program.methods
-      .supply(new BN(800 * 10 ** 9))
-      .accounts({
-        feePayer: payerAccount,
-        authority: payerAccount,
-        tokenAccount: fromAta.address,
-        vault: vaultAccount,
-        vaultTokenAccount: vaultAta,
-        mint: mint,
-        configAccount,
-        tokenProgram: TOKEN_PROGRAM_ID,
-        systemProgram: SystemProgram.programId,
-        associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
-        rent: anchor.web3.SYSVAR_RENT_PUBKEY,
-      })
-      .instruction(),
-  ];
+  console.log(vaultAccount.toBase58());
 
-  const tx = new Transaction().add(...instructions);
-  tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
-  tx.feePayer = payerAccount;
-  const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
-  recoverTx.sign(payer);
+  // const mint = new PublicKey(RELENT_MINT);
+  // const vaultAta = await getAssociatedTokenAddress(mint, vaultAccount, true);
+  // console.log(vaultAta.toBase58());
+  // const fromAta = await getOrCreateAssociatedTokenAccount(connection, keypair, mint, payerAccount);
+  // console.log(fromAta.address.toBase58());
+  // const instructions = [
+  //   await program.methods
+  //     .supply(new BN(800 * 10 ** 9))
+  //     .accounts({
+  //       feePayer: payerAccount,
+  //       authority: payerAccount,
+  //       tokenAccount: fromAta.address,
+  //       vault: vaultAccount,
+  //       vaultTokenAccount: vaultAta,
+  //       mint: mint,
+  //       configAccount,
+  //       tokenProgram: TOKEN_PROGRAM_ID,
+  //       systemProgram: SystemProgram.programId,
+  //       associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+  //       rent: anchor.web3.SYSVAR_RENT_PUBKEY,
+  //     })
+  //     .instruction(),
+  // ];
 
-  await connection.sendRawTransaction(recoverTx.serialize());
+  // const tx = new Transaction().add(...instructions);
+  // tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+  // tx.feePayer = payerAccount;
+  // const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+  // recoverTx.sign(payer);
+
+  // await connection.sendRawTransaction(recoverTx.serialize());
 };
 
 let registerForEarnFn = async () => {
