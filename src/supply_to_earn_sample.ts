@@ -112,13 +112,14 @@ let supplyToEarnFn = async () => {
   console.log(reserveAccount.toBase58(), supplyApyAccount.toBase58(), configAccount.toBase58());
   const instructions = [
     await program.methods
-      .supplyToEarn(new PublicKey("AX3SRJDbGw4QSpMNyWubTQhUV1sww7qsPAy12K3aHrtb"), reserve)
+      .supplyToEarn(new PublicKey("AX3SRJDbGw4QSpMNyWubTQhUV1sww7qsPAy12K3aHrtb"))
       .accounts({
         authority: payer.publicKey,
         reserveReward: reserveAccount,
         supplyApy: supplyApyAccount,
         configAccount,
         obligation,
+        reserve,
         systemProgram: SystemProgram.programId,
       })
       .instruction(),
@@ -158,15 +159,15 @@ let claimRewardFn = async () => {
 
   const instructions = [
     await program.methods
-      .claimSteReward(new PublicKey("AX3SRJDbGw4QSpMNyWubTQhUV1sww7qsPAy12K3aHrtb"), reserve)
+      .claimSteReward(new PublicKey("AX3SRJDbGw4QSpMNyWubTQhUV1sww7qsPAy12K3aHrtb"))
       .accounts({
-        feePayer: payer.publicKey,
         authority: payer.publicKey,
         tokenAccount: toAta.address,
         vault: vaultAccount,
         vaultTokenAccount: vaultAta,
         mint,
         obligation,
+        reserve,
         reserveReward: reserveAccount,
         supplyApy: supplyApyAccount,
         configAccount,

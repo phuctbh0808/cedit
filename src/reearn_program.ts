@@ -365,7 +365,12 @@ export type ReearnProgram = {
         },
         {
           "name": "obligation",
-          "isMut": true,
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserve",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -378,10 +383,6 @@ export type ReearnProgram = {
         {
           "name": "wallet",
           "type": "publicKey"
-        },
-        {
-          "name": "reserve",
-          "type": "publicKey"
         }
       ]
     },
@@ -389,13 +390,8 @@ export type ReearnProgram = {
       "name": "claimSteReward",
       "accounts": [
         {
-          "name": "feePayer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "authority",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -420,7 +416,12 @@ export type ReearnProgram = {
         },
         {
           "name": "obligation",
-          "isMut": true,
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserve",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -447,10 +448,6 @@ export type ReearnProgram = {
       "args": [
         {
           "name": "wallet",
-          "type": "publicKey"
-        },
-        {
-          "name": "reserve",
           "type": "publicKey"
         }
       ]
@@ -1011,7 +1008,12 @@ export const IDL: ReearnProgram = {
         },
         {
           "name": "obligation",
-          "isMut": true,
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserve",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -1024,10 +1026,6 @@ export const IDL: ReearnProgram = {
         {
           "name": "wallet",
           "type": "publicKey"
-        },
-        {
-          "name": "reserve",
-          "type": "publicKey"
         }
       ]
     },
@@ -1035,13 +1033,8 @@ export const IDL: ReearnProgram = {
       "name": "claimSteReward",
       "accounts": [
         {
-          "name": "feePayer",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
           "name": "authority",
-          "isMut": false,
+          "isMut": true,
           "isSigner": true
         },
         {
@@ -1066,7 +1059,12 @@ export const IDL: ReearnProgram = {
         },
         {
           "name": "obligation",
-          "isMut": true,
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "reserve",
+          "isMut": false,
           "isSigner": false
         },
         {
@@ -1093,10 +1091,6 @@ export const IDL: ReearnProgram = {
       "args": [
         {
           "name": "wallet",
-          "type": "publicKey"
-        },
-        {
-          "name": "reserve",
           "type": "publicKey"
         }
       ]

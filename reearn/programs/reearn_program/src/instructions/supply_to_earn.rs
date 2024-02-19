@@ -1,16 +1,16 @@
-use crate::{constants::*, errors::ReearnErrorCode, id::RELEND_PROGRAM, state::*};
+use crate::{constants::*, errors::ReearnErrorCode, id::{RELEND_PROGRAM}, state::*};
 use anchor_lang::prelude::*;
-use relend_sdk::state::Obligation;
+use relend_sdk::state::{Obligation, Reserve};
 use solana_program::program_pack::{IsInitialized, Pack};
 
 #[derive(Accounts)]
-#[instruction(wallet: Pubkey, reserve: Pubkey)]
+#[instruction(wallet: Pubkey)]
 pub struct SupplyToEarn<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
     #[account(
         init_if_needed,
-        seeds = [RESERVE_REWARD_SEED, reserve.as_ref(), obligation.key.as_ref()],
+        seeds = [RESERVE_REWARD_SEED, reserve.key.as_ref(), obligation.key.as_ref()],
         bump,
         payer = authority,
         space = ReserveReward::LEN,
@@ -18,7 +18,7 @@ pub struct SupplyToEarn<'info> {
     pub reserve_reward: Account<'info, ReserveReward>,
     #[account(
         mut,
-        seeds = [SUPPLY_APY_SEED, reserve.as_ref()],
+        seeds = [SUPPLY_APY_SEED, reserve.key.as_ref()],
         bump,
     )]
     pub supply_apy: Account<'info, SupplyApy>,
@@ -30,10 +30,12 @@ pub struct SupplyToEarn<'info> {
     pub config_account: Account<'info, Config>,
     /// CHECK: general account for obligation
     pub obligation: AccountInfo<'info>,
+    /// CHECK: general account for reserve
+    pub reserve: AccountInfo<'info>,
     pub system_program: Program<'info, System>,
 }
 
-pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey, reserve: Pubkey) -> ProgramResult {
+pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey) -> ProgramResult {
     let authority = &ctx.accounts.authority;
     let reserve_reward = &mut ctx.accounts.reserve_reward;
     let config_account = &ctx.accounts.config_account;
@@ -52,6 +54,16 @@ pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey, reserve: Pubkey) -> Prog
         return Err(ReearnErrorCode::WrongObligation.into());
     }
 
+    let reserve_info = &ctx.accounts.reserve;
+    msg!("Checking reserve owner");
+    if *reserve_info.owner != RELEND_PROGRAM {
+        msg!("Reserve provided is not owned by the lending program");
+        return Err(ReearnErrorCode::InvalidAccountOwner.into());
+    }
+
+    msg!("Unpacking reserve data");
+    let reserve = Reserve::unpack(&reserve_info.data.borrow())?;
+
     msg!("Checking authority");
     if *authority.key != config_account.operator
         && *authority.key != config_account.admin
@@ -61,12 +73,12 @@ pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey, reserve: Pubkey) -> Prog
     }
 
     let clock = &Clock::get()?;
-   
+
     if !reserve_reward.initialized {
         msg!("Initializing reserve reward");
         reserve_reward.initialized = true;
         reserve_reward.obligation_id = *obligation_info.key;
-        reserve_reward.reserve = reserve;
+        reserve_reward.reserve = *reserve_info.key;
         reserve_reward.owner = obligation.owner;
         reserve_reward.accumulated_reward_amount = 0.0;
         reserve_reward.last_supply = clock.unix_timestamp;
@@ -79,17 +91,17 @@ pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey, reserve: Pubkey) -> Prog
             ReearnErrorCode::WrongObligation
         );
         require!(
-            reserve_reward.reserve == reserve,
+            reserve_reward.reserve == *reserve_info.key,
             ReearnErrorCode::WrongReserve
         );
 
         msg!("Finding collateral in deposits");
-        let (collateral, _) = obligation.find_collateral_in_deposits(reserve)?;
-
+        let (collateral, _) = obligation.find_collateral_in_deposits(reserve_reward.reserve)?;
+        let reserve_decimals = reserve.liquidity.mint_decimals;
         msg!("Calculating reward");
         let supply_amount = collateral
             .deposited_amount
-            .checked_div(10u64.checked_pow(9).ok_or(ReearnErrorCode::MathOverflow)?)
+            .checked_div(10u64.checked_pow(reserve_decimals as u32).ok_or(ReearnErrorCode::MathOverflow)?)
             .ok_or(ReearnErrorCode::MathOverflow)?;
         let current_reward = supply_apy.calculate_reward(
             supply_amount,

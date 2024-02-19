@@ -71,16 +71,14 @@ pub mod reearn_program {
     pub fn supply_to_earn(
         ctx: Context<SupplyToEarn>,
         wallet: Pubkey,
-        reserve: Pubkey,
     ) -> ProgramResult {
-        supply_to_earn::exec(ctx, wallet, reserve)
+        supply_to_earn::exec(ctx, wallet)
     }
 
     pub fn claim_ste_reward(
         ctx: Context<ClaimReserveReward>,
         wallet: Pubkey,
-        reserve: Pubkey,
     ) -> ProgramResult {
-        claim_ste_reward::exec(ctx, wallet, reserve)
+        claim_ste_reward::exec(ctx, wallet)
     }
 }

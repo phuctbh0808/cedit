@@ -1,15 +1,14 @@
 use crate::{constants::*, errors::ReearnErrorCode, id::{RELEND_PROGRAM}, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{TokenAccount, Mint, Token, Transfer, self};
-use relend_sdk::state::Obligation;
+use relend_sdk::state::{Obligation, Reserve};
 use solana_program::program_pack::{IsInitialized, Pack};
 
 #[derive(Accounts)]
-#[instruction(wallet: Pubkey, reserve: Pubkey)]
+#[instruction(wallet: Pubkey)]
 pub struct ClaimReserveReward<'info> {
-    #[account(mut)]
-    fee_payer: Signer<'info>,
     #[account(
+        mut,
         address = reserve_reward.owner @ ReearnErrorCode::WrongRewardOwner,
     )]
     pub authority: Signer<'info>,
@@ -37,15 +36,17 @@ pub struct ClaimReserveReward<'info> {
     pub mint: Account<'info, Mint>,
     /// CHECK: general account for obligation
     pub obligation: AccountInfo<'info>,
+     /// CHECK: general account for reserve
+     pub reserve: AccountInfo<'info>,
     #[account(
         mut,
-        seeds = [RESERVE_REWARD_SEED, reserve.as_ref(), obligation.key.as_ref()],
+        seeds = [RESERVE_REWARD_SEED, reserve.key.as_ref(), obligation.key.as_ref()],
         bump,
     )]
     pub reserve_reward: Account<'info, ReserveReward>,
     #[account(
         mut,
-        seeds = [SUPPLY_APY_SEED, reserve.as_ref()],
+        seeds = [SUPPLY_APY_SEED, reserve.key.as_ref()],
         bump,
     )]
     pub supply_apy: Account<'info, SupplyApy>,
@@ -60,7 +61,6 @@ pub struct ClaimReserveReward<'info> {
 pub fn exec(
     ctx: Context<ClaimReserveReward>,
     wallet: Pubkey,
-    reserve: Pubkey,
 ) -> ProgramResult {
     msg!("Checking obligation owner");
     let obligation_info = &ctx.accounts.obligation;
@@ -68,6 +68,16 @@ pub fn exec(
         msg!("Obligation provided is not owned by the lending program");
         return Err(ReearnErrorCode::InvalidAccountOwner.into());
     }
+
+    let reserve_info = &ctx.accounts.reserve;
+    msg!("Checking reserve owner");
+    if *reserve_info.owner != RELEND_PROGRAM {
+        msg!("Reserve provided is not owned by the lending program");
+        return Err(ReearnErrorCode::InvalidAccountOwner.into());
+    }
+
+    msg!("Unpacking reserve data");
+    let reserve = Reserve::unpack(&reserve_info.data.borrow())?;
     
     let reserve_reward = &mut ctx.accounts.reserve_reward;
     let supply_apy = &ctx.accounts.supply_apy;
@@ -82,7 +92,7 @@ pub fn exec(
         ReearnErrorCode::WrongWallet
     );
     require!(
-        reserve_reward.reserve == reserve,
+        reserve_reward.reserve == *reserve_info.key,
         ReearnErrorCode::WrongReserve
     );
 
@@ -95,11 +105,12 @@ pub fn exec(
     }
 
     msg!("Finding collateral in deposits");
-    let (collateral, _)  = obligation.find_collateral_in_deposits(reserve)?;
+    let (collateral, _)  = obligation.find_collateral_in_deposits(reserve_reward.reserve)?;
+    let reserve_decimals = reserve.liquidity.mint_decimals;
     
     msg!("Calculating reward");
     let supply_amount = collateral.deposited_amount.checked_div(
-        10u64.checked_pow(9).ok_or(ReearnErrorCode::MathOverflow)?
+        10u64.checked_pow(reserve_decimals as u32).ok_or(ReearnErrorCode::MathOverflow)?
     ).ok_or(ReearnErrorCode::MathOverflow)?;
     let current_reward = supply_apy.calculate_reward(supply_amount, clock.unix_timestamp - reserve_reward.last_supply);
     let total_claim_reward = reserve_reward.accumulated_reward_amount + current_reward;

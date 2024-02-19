@@ -30,8 +30,8 @@ impl SupplyApy {
     pub fn calculate_reward(&self, supply_amount: u64, duration: i64) -> f64 {
         let time_diff_years = duration / (365 * 24 * 60 * 60);
         let principal = supply_amount as f64;
-        let compound_interest = self.apy + 1.0;
-        let compounded = principal*(compound_interest.powf(time_diff_years as f32) as f64);
+        let compound_interest = (self.apy + 1.0) as f64;
+        let compounded = (principal * compound_interest)*time_diff_years as f64;
         let earnings = compounded - principal;
         earnings
     }
