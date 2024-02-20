@@ -1,4 +1,9 @@
-use crate::{constants::*, errors::ReearnErrorCode, id::{RELEND_PROGRAM}, state::*};
+use crate::{
+    constants::*,
+    errors::ReearnErrorCode,
+    id::{RELEND_PROGRAM},
+    state::*,
+};
 use anchor_lang::prelude::*;
 use relend_sdk::state::{Obligation, Reserve};
 use solana_program::program_pack::{IsInitialized, Pack};
@@ -96,19 +101,37 @@ pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey) -> ProgramResult {
         );
 
         msg!("Finding collateral in deposits");
-        let (collateral, _) = obligation.find_collateral_in_deposits(reserve_reward.reserve)?;
-        let reserve_decimals = reserve.liquidity.mint_decimals;
-        msg!("Calculating reward");
-        let supply_amount = collateral
-            .deposited_amount
-            .checked_div(10u64.checked_pow(reserve_decimals as u32).ok_or(ReearnErrorCode::MathOverflow)?)
-            .ok_or(ReearnErrorCode::MathOverflow)?;
-        let current_reward = supply_apy.calculate_reward(
-            supply_amount,
-            clock.unix_timestamp - reserve_reward.last_supply,
-        );
-        reserve_reward.accumulated_reward_amount =
-            reserve_reward.accumulated_reward_amount + current_reward;
+        match obligation.find_collateral_in_deposits(reserve_reward.reserve) {
+            Ok((collateral, _)) => {
+                msg!("Collateral found");
+                let reserve_decimals = reserve.liquidity.mint_decimals;
+                msg!("Calculating reward");
+                msg!(
+                    "Collateral deposited amount: {}",
+                    collateral.deposited_amount
+                );
+                let supply_amount = collateral
+                    .deposited_amount
+                    .checked_div(
+                        10u64
+                            .checked_pow(reserve_decimals as u32)
+                            .ok_or(ReearnErrorCode::MathOverflow)?,
+                    )
+                    .ok_or(ReearnErrorCode::MathOverflow)?;
+                let current_reward = supply_apy.calculate_reward(
+                    supply_amount,
+                    clock.unix_timestamp - reserve_reward.last_supply,
+                );
+                reserve_reward.accumulated_reward_amount =
+                    reserve_reward.accumulated_reward_amount + current_reward;
+            }
+            Err(_) => {
+                msg!("Collateral not found for deposit reserve {}", reserve_reward.reserve);
+                msg!("Skipping reward calculation and reset accumulated reward amount to zero");
+                reserve_reward.accumulated_reward_amount = 0.0;
+            }
+        }
+
         reserve_reward.last_supply = clock.unix_timestamp;
     }
 
