@@ -94,6 +94,38 @@ let initializeFn = async () => {
   await connection.sendRawTransaction(recoverTx.serialize());
 };
 
+let changeSupplyAPY = async () => {
+  let bump: number;
+  [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(CONFIG_SEED), payerAccount.toBuffer()],
+    programId,
+  );
+
+  [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(SUPPLY_REWARD_SEED), reserve.toBuffer()],
+    programId,
+  );
+
+  const instructions = [
+    await program.methods
+      .changeSupplyApy(new PublicKey(RELEND_MINT), 3.0, 9)
+      .accounts({
+        authority: payerAccount,
+        supplyApy: supplyApyAccount,
+        configAccount,
+      })
+      .instruction(),
+  ];
+
+  const tx = new Transaction().add(...instructions);
+  tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+  tx.feePayer = payerAccount;
+  const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+  recoverTx.sign(payer);
+
+  await connection.sendRawTransaction(recoverTx.serialize());
+};
+
 let supplyToEarnFn = async () => {
   let bump: number;
   [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
@@ -205,7 +237,7 @@ let fetchReserveRewardFn = async () => {
   console.log(await program.account.reserveReward.all());
 }
 
-claimRewardFn()
+fetchSupplyAPY()
   .then(() => {
     console.log("Finished successfully");
     process.exit(0);

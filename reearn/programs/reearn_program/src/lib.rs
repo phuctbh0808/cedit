@@ -84,11 +84,10 @@ pub mod reearn_program {
 
     pub fn change_supply_apy(
         ctx: Context<ChangeSupplyApy>,
-        reserve: Pubkey,
         reward: Pubkey,
         apy: f32,
         token_decimals: u8,
     ) -> ProgramResult {
-        change_supply_apy::exec(ctx, reserve, reward, apy, token_decimals)
+        change_supply_apy::exec(ctx, reward, apy, token_decimals)
     }
 }
