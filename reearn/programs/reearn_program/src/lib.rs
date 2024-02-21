@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 
-declare_id!("5eLFCRaYaNkJHRKBTTiFjXK8wbPRn1WkT631CWMYYvEr");
+declare_id!("DNWtXxdTAjjgZckwCq8sXKnoxGFdD5riNZn4q4zTRqD4");
 
 pub mod constants;
-pub mod reward_token;
+pub mod id;
 pub mod errors;
 pub mod instructions;
 pub mod state;
@@ -56,5 +56,38 @@ pub mod reearn_program {
 
     pub fn supply(ctx: Context<SupplyReward>, amount: u64) -> ProgramResult {
         supply::exec(ctx, amount)
+    }
+
+    pub fn init_reserve_reward(
+        ctx: Context<InitReserveReward>,
+        reserve: Pubkey,
+        reward: Pubkey,
+        apy: f32,
+        token_decimals: u8,
+    ) -> ProgramResult {
+        init_reserve_reward::exec(ctx, reserve, reward, apy, token_decimals)
+    }
+
+    pub fn supply_to_earn(
+        ctx: Context<SupplyToEarn>,
+        wallet: Pubkey,
+    ) -> ProgramResult {
+        supply_to_earn::exec(ctx, wallet)
+    }
+
+    pub fn claim_ste_reward(
+        ctx: Context<ClaimReserveReward>,
+        wallet: Pubkey,
+    ) -> ProgramResult {
+        claim_ste_reward::exec(ctx, wallet)
+    }
+
+    pub fn change_supply_apy(
+        ctx: Context<ChangeSupplyApy>,
+        reward: Pubkey,
+        apy: f32,
+        token_decimals: u8,
+    ) -> ProgramResult {
+        change_supply_apy::exec(ctx, reward, apy, token_decimals)
     }
 }

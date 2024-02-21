@@ -451,40 +451,6 @@ export type ReearnProgram = {
           "type": "publicKey"
         }
       ]
-    },
-    {
-      "name": "changeSupplyApy",
-      "accounts": [
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "supplyApy",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "configAccount",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "reward",
-          "type": "publicKey"
-        },
-        {
-          "name": "apy",
-          "type": "f32"
-        },
-        {
-          "name": "tokenDecimals",
-          "type": "u8"
-        }
-      ]
     }
   ],
   "accounts": [
@@ -585,7 +551,7 @@ export type ReearnProgram = {
           },
           {
             "name": "accumulatedRewardAmount",
-            "type": "u64"
+            "type": "f64"
           },
           {
             "name": "lastSupply",
@@ -1128,40 +1094,6 @@ export const IDL: ReearnProgram = {
           "type": "publicKey"
         }
       ]
-    },
-    {
-      "name": "changeSupplyApy",
-      "accounts": [
-        {
-          "name": "authority",
-          "isMut": true,
-          "isSigner": true
-        },
-        {
-          "name": "supplyApy",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "configAccount",
-          "isMut": true,
-          "isSigner": false
-        }
-      ],
-      "args": [
-        {
-          "name": "reward",
-          "type": "publicKey"
-        },
-        {
-          "name": "apy",
-          "type": "f32"
-        },
-        {
-          "name": "tokenDecimals",
-          "type": "u8"
-        }
-      ]
     }
   ],
   "accounts": [
@@ -1262,7 +1194,7 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "accumulatedRewardAmount",
-            "type": "u64"
+            "type": "f64"
           },
           {
             "name": "lastSupply",

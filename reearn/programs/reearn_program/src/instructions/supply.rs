@@ -1,7 +1,7 @@
 use crate::{constants::*, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::{token::{TokenAccount, Mint, Token, Transfer, self}, associated_token::AssociatedToken};
-use crate::reward_token::*;
+use crate::id::*;
 
 #[derive(Accounts)]
 pub struct SupplyReward<'info> {

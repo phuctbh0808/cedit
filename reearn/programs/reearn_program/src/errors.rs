@@ -21,4 +21,10 @@ pub enum ReearnErrorCode {
     WrongRewardOwner,
     #[msg("Already claimed today")]
     AlreadyClaimedToday,
+    #[msg("Wrong reserve")]
+    WrongReserve,
+    #[msg("Wrong reward token")]
+    WrongRewardToken,
+    #[msg("Invalid account owner")]
+    InvalidAccountOwner,
 }
