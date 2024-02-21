@@ -1,7 +1,7 @@
 use crate::{
     constants::*,
     errors::ReearnErrorCode,
-    id::{RELEND_PROGRAM},
+    id::RELEND_PROGRAM,
     state::*,
 };
 use anchor_lang::prelude::*;
@@ -85,7 +85,7 @@ pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey) -> ProgramResult {
         reserve_reward.obligation_id = *obligation_info.key;
         reserve_reward.reserve = *reserve_info.key;
         reserve_reward.owner = obligation.owner;
-        reserve_reward.accumulated_reward_amount = 0.0;
+        reserve_reward.accumulated_reward_amount = 0;
         reserve_reward.last_supply = clock.unix_timestamp;
     } else {
         msg!("Refreshing reserve reward");
@@ -110,25 +110,17 @@ pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey) -> ProgramResult {
                     "Collateral deposited amount: {}",
                     collateral.deposited_amount
                 );
-                let supply_amount = collateral
-                    .deposited_amount
-                    .checked_div(
-                        10u64
-                            .checked_pow(reserve_decimals as u32)
-                            .ok_or(ReearnErrorCode::MathOverflow)?,
-                    )
-                    .ok_or(ReearnErrorCode::MathOverflow)?;
                 let current_reward = supply_apy.calculate_reward(
-                    supply_amount,
+                    collateral.deposited_amount, reserve_decimals as u32,
                     clock.unix_timestamp - reserve_reward.last_supply,
-                );
+                )?;
                 reserve_reward.accumulated_reward_amount =
                     reserve_reward.accumulated_reward_amount + current_reward;
             }
             Err(_) => {
                 msg!("Collateral not found for deposit reserve {}", reserve_reward.reserve);
                 msg!("Skipping reward calculation and reset accumulated reward amount to zero");
-                reserve_reward.accumulated_reward_amount = 0.0;
+                reserve_reward.accumulated_reward_amount = 0;
             }
         }
 

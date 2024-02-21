@@ -35,7 +35,7 @@ const secretKey = Uint8Array.from(secretByte);
 const keypair = web3.Keypair.fromSecretKey(secretKey);
 const wallet = new Wallet(keypair);
 const provider = new AnchorProvider(connection, wallet, opts);
-const programId = new PublicKey("3PLoeNAqCbGQWMQRm9fFMb2kfwaSQbrLnn613gFFQswT");
+const programId = new PublicKey("DNWtXxdTAjjgZckwCq8sXKnoxGFdD5riNZn4q4zTRqD4");
 const program = new anchor.Program(IDL, programId, provider);
 const payer = (provider.wallet as anchor.Wallet).payer;
 const payerAccount = payer.publicKey;
@@ -205,7 +205,7 @@ let fetchReserveRewardFn = async () => {
   console.log(await program.account.reserveReward.all());
 }
 
-supplyToEarnFn()
+claimRewardFn()
   .then(() => {
     console.log("Finished successfully");
     process.exit(0);

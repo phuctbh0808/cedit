@@ -1,4 +1,4 @@
-use crate::{constants::*, errors::ReearnErrorCode, id::{RELEND_PROGRAM}, state::*};
+use crate::{constants::*, errors::ReearnErrorCode, id::RELEND_PROGRAM, state::*};
 use anchor_lang::prelude::*;
 use anchor_spl::token::{TokenAccount, Mint, Token, Transfer, self};
 use relend_sdk::state::{Obligation, Reserve};
@@ -105,46 +105,48 @@ pub fn exec(
     }
 
     msg!("Finding collateral in deposits");
-    let (collateral, _)  = obligation.find_collateral_in_deposits(reserve_reward.reserve)?;
-    let reserve_decimals = reserve.liquidity.mint_decimals;
-    
-    msg!("Calculating reward");
-    let supply_amount = collateral.deposited_amount.checked_div(
-        10u64.checked_pow(reserve_decimals as u32).ok_or(ReearnErrorCode::MathOverflow)?
-    ).ok_or(ReearnErrorCode::MathOverflow)?;
-    let current_reward = supply_apy.calculate_reward(supply_amount, clock.unix_timestamp - reserve_reward.last_supply);
-    let total_claim_reward = reserve_reward.accumulated_reward_amount + current_reward;
-    reserve_reward.last_supply = clock.unix_timestamp;
-    reserve_reward.accumulated_reward_amount = 0.0;
+    match obligation.find_collateral_in_deposits(reserve_reward.reserve) {
+        Ok((collateral, _)) => {
+            let reserve_decimals = reserve.liquidity.mint_decimals;
+            msg!("Calculating reward");
+            let current_reward = supply_apy.calculate_reward(
+                collateral.deposited_amount, reserve_decimals as u32,
+                 clock.unix_timestamp - reserve_reward.last_supply)?;
+            let total_claim_reward = reserve_reward.accumulated_reward_amount + current_reward;
+            reserve_reward.last_supply = clock.unix_timestamp;
+            reserve_reward.accumulated_reward_amount = 0;
+        
+            msg!("Preparing reward transfer");
+            let destination = &ctx.accounts.token_account;
+            let source = &ctx.accounts.vault_token_account;
+            let token_program = &ctx.accounts.token_program;
+            let vault_account = &ctx.accounts.vault;
+            let config_account = &ctx.accounts.config_account;
+            let config_key = config_account.clone().key();
+            let bump = config_account.vault_bump[0];
+            let signer: &[&[&[u8]]] = &[&[VAULT_SEED, config_key.as_ref(), &[bump]]];
+            let cpi_ctx = CpiContext::new_with_signer(
+                token_program.to_account_info(),
+                Transfer {
+                    from: source.to_account_info().clone(),
+                    to: destination.to_account_info().clone(),
+                    authority: vault_account.to_account_info().clone(),
+                },
+                signer,
+            );
+        
+            msg!("Transfering reward");
+            token::transfer(cpi_ctx, total_claim_reward)?;
+        }
+        Err(e) => {
+            msg!("Collateral not found for deposit reserve {}", reserve_reward.reserve);
+            msg!("Skipping reward calculation and reset accumulated reward amount to zero");
+            reserve_reward.accumulated_reward_amount = 0;
+            reserve_reward.last_supply = clock.unix_timestamp;
 
-    msg!("Preparing reward transfer");
-    let billion = 10u64;
-    let reward_decimals = billion
-        .checked_pow(supply_apy.token_decimals as u32)
-        .ok_or(ReearnErrorCode::MathOverflow)?;
-
-    let calculated_reward = (total_claim_reward * (reward_decimals as f64)) as u64;
-
-    let destination = &ctx.accounts.token_account;
-    let source = &ctx.accounts.vault_token_account;
-    let token_program = &ctx.accounts.token_program;
-    let vault_account = &ctx.accounts.vault;
-    let config_account = &ctx.accounts.config_account;
-    let config_key = config_account.clone().key();
-    let bump = config_account.vault_bump[0];
-    let signer: &[&[&[u8]]] = &[&[VAULT_SEED, config_key.as_ref(), &[bump]]];
-    let cpi_ctx = CpiContext::new_with_signer(
-        token_program.to_account_info(),
-        Transfer {
-            from: source.to_account_info().clone(),
-            to: destination.to_account_info().clone(),
-            authority: vault_account.to_account_info().clone(),
-        },
-        signer,
-    );
-
-    msg!("Transfering reward");
-    token::transfer(cpi_ctx, calculated_reward)?;
+            return Err(e.into());
+        }
+    }
 
     Ok(())
 }

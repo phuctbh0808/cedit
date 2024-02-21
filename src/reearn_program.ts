@@ -551,7 +551,7 @@ export type ReearnProgram = {
           },
           {
             "name": "accumulatedRewardAmount",
-            "type": "f64"
+            "type": "u64"
           },
           {
             "name": "lastSupply",
@@ -1194,7 +1194,7 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "accumulatedRewardAmount",
-            "type": "f64"
+            "type": "u64"
           },
           {
             "name": "lastSupply",
