@@ -8,6 +8,7 @@ pub mod supply;
 pub mod init_reserve_reward;
 pub mod supply_to_earn;
 pub mod claim_ste_reward;
+pub mod change_supply_apy;
 
 pub use initialize::*;
 pub use change_operator::*;
@@ -19,3 +20,4 @@ pub use supply::*;
 pub use init_reserve_reward::*;
 pub use supply_to_earn::*;
 pub use claim_ste_reward::*;
+pub use change_supply_apy::*;
