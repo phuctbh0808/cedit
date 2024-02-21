@@ -35,7 +35,7 @@ impl SupplyApy {
         let earnings = supply_amount
         .try_mul(apy_percentage)?
         .try_mul(duration as u64)?
-        .try_div(3153600)? // 60*60*24*365
+        .try_div(31536000)? // 60*60*24*365
         .try_div(100)? // percentage
         .try_mul(10u64.pow(self.token_decimals as u32))?
         .try_floor_u64()?;
