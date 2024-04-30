@@ -9,7 +9,7 @@ mod relend_test {
 pub use relend::ID as RELEND;
 mod relend {
     use super::*;
-    declare_id!("Gt9oqTVmAwhrjBpS5j4Nc39fr9gCYArWxVXuHHc8QxnJ");
+    declare_id!("CN7pLWoBcvQ597tQ7surcMtMBzrD2TaXSrh1CCybu6Mk");
 }
 
 pub use relend_program::ID as RELEND_PROGRAM;
