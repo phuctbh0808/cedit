@@ -610,29 +610,24 @@ program
   .option("--market <string>", "Lending market address")
   .option("--risk_authority <string>", "Risk authority address")
   .action(async (params) => {
-    let {
-      program_id,
-      payer,
-      market_owner,
-      market,
-      risk_authority,
-    } = params;
+    let { program_id, payer, market_owner, market, risk_authority } = params;
 
     console.log("Set lending market risk authority");
     console.log("params:", params);
 
-    if (!PublicKey.isOnCurve((new PublicKey(risk_authority)).toBase58()) || !PublicKey.isOnCurve(risk_authority)) {
+    if (
+      !PublicKey.isOnCurve(new PublicKey(risk_authority).toBase58()) ||
+      !PublicKey.isOnCurve(risk_authority)
+    ) {
       console.error("Invalid risk authority address");
       return;
-    };
+    }
 
     const currentExeDir = path.join(__dirname, "..");
     console.log("Execution folder: ", currentExeDir);
     // Check if risk authority is already set
     // Get current market info
-    let viewMarketExecParams = [
-      `--market ${market}`,
-    ];
+    let viewMarketExecParams = [`--market ${market}`];
     let viewMarketExecCmd =
       `RUST_BACKTRACE=1 ${currentExeDir}/target/debug/relend-program --program ${program_id} view-market ` +
       viewMarketExecParams.join(" ");
@@ -662,7 +657,6 @@ program
         console.log("Failed to get risk authority from lending market");
       }
     });
-
 
     let exeParams = [
       `--fee-payer ${payer}`,
@@ -890,6 +884,145 @@ program
     await connection.sendRawTransaction(recoverTx.serialize());
     const configAccountInfo = await program.account.config.fetch(configAccount);
     console.log(configAccountInfo);
+  });
+
+program
+  .command("enable-supply-gauge")
+  .option("--program_id <string>", "Pubkey")
+  .option("--source <string>", "wallet keypair")
+  .option("--network_url <string>", "")
+  .option("--admin_key <string>", "Pubkey")
+  .option("--reserve <string>", "Pubkey")
+  .option("--reward <string>", "Pubkey")
+  .option("--reward_decimals <number>", "")
+  .option("--apy <number>", "ration decimal number")
+  .description("Enable gauge for supply reserve")
+  .action(async (params) => {
+    let { program_id, source, network_url, admin_key, reserve, reward, reward_decimals, apy } =
+      params;
+
+    console.log("Enable supply gauge");
+    console.log("params:", params);
+
+    if (
+      !PublicKey.isOnCurve(new PublicKey(reserve).toBase58()) ||
+      !PublicKey.isOnCurve(reserve) || 
+      !PublicKey.isOnCurve(reward) ||
+      !PublicKey.isOnCurve(new PublicKey(reward).toBase58())
+    ) {
+      console.error("Invalid pubkey address for reserve or reward");
+      return;
+    }
+
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+    let sourceOwner = keypair.publicKey;
+    let configAccount: PublicKey;
+    let supplyApyAccount: PublicKey;
+    let vaultAccount: PublicKey;
+    let bump: number;
+    let supplyApyBump: number;
+    const VAULT_SEED = "onepiece";
+    const CONFIG_SEED = "supernova";
+    const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
+    const reserveKey = new PublicKey(reserve);
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(CONFIG_SEED), new PublicKey(admin_key).toBuffer()],
+      programId,
+    );
+
+    [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(SUPPLY_REWARD_SEED), reserveKey.toBuffer()],
+      programId,
+    );
+
+    await program.account.supplyApy
+      .fetch(supplyApyAccount)
+      .then(async () => {
+        console.log("Supply apy account found, updating it");
+        const instructions = [
+          await program.methods
+            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals)
+            .accounts({
+              authority: sourceOwner,
+              supplyApy: supplyApyAccount,
+              configAccount,
+            })
+            .instruction(),
+        ];
+
+        const tx = new Transaction().add(...instructions);
+        tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+        tx.feePayer = sourceOwner;
+        const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+        recoverTx.sign(keypair);
+
+        await connection.sendRawTransaction(recoverTx.serialize());
+      })
+      .catch(async () => {
+        console.log("Supply apy account not found, creating new one");
+        const instructions = [
+          await program.methods
+            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals)
+            .accounts({
+              feePayer: sourceOwner,
+              authority: sourceOwner,
+              supplyApy: supplyApyAccount,
+              configAccount,
+              systemProgram: SystemProgram.programId,
+            })
+            .instruction(),
+        ];
+
+        const tx = new Transaction().add(...instructions);
+        tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+        tx.feePayer = sourceOwner;
+        const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+        recoverTx.sign(keypair);
+
+        await connection.sendRawTransaction(recoverTx.serialize());
+      });
+
+    console.log("Reearn supply vault \n");
+    let vaultBump: number;
+    [vaultAccount, vaultBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(VAULT_SEED), configAccount.toBuffer()],
+      programId,
+    );
+    console.log(vaultAccount.toBase58());
+  });
+
+program
+  .command("fetch-reearn-config")
+  .option("--program_id <string>", "")
+  .option("--source <string>", "")
+  .option("--network_url <string>", "")
+  .description("Fetch reearn config")
+  .action(async (params) => {
+    let { program_id, source, network_url } = params;
+
+    console.log("Ferch reearn config");
+    console.log("params:", params);
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+
+    console.log("Reearn admin configuration \n");
+    const configAccountInfo = await program.account.config.all();
+    console.log(configAccountInfo);
+
+    console.log("Reearn supply gauge configuration \n");
+    const rewardInfo = await program.account.supplyApy.all();
+    console.log(rewardInfo);
   });
 
 program.parse();
