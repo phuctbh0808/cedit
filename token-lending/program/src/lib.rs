@@ -9,7 +9,7 @@ pub use relend_sdk::{error, instruction, math, oracles, state};
 // Export current sdk types for downstream users building with a different sdk version
 pub use solana_program;
 
-solana_program::declare_id!("LP17qXm5XnefkyVzkJa8gLcKXnjmsjX3YQCdB18Dsku");
+solana_program::declare_id!("BtdHuy25QeiQg8TkgFyHkFXJbezhNE1tyAC7sAMjzh24");
 
 /// Canonical null pubkey. Prints out as "nu11111111111111111111111111111111111111111"
 pub const NULL_PUBKEY: solana_program::pubkey::Pubkey =

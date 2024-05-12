@@ -1163,7 +1163,7 @@ fn main() {
             let borrow_limit = value_of(arg_matches, "borrow_limit").unwrap();
 
             let added_borrow_weight_bps = value_of(arg_matches, "added_borrow_weight_bps").unwrap();
-            let reserve_type = value_of(arg_matches, "reserve_type").unwrap();
+            let reserve_type = ReserveType::Regular;
 
             let borrow_fee_wad = (borrow_fee * WAD as f64) as u64;
             let flash_loan_fee_wad = (flash_loan_fee * WAD as f64) as u64;
