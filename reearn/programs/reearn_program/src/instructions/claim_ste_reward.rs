@@ -65,6 +65,8 @@ pub fn exec(
     msg!("Checking obligation owner");
     let obligation_info = &ctx.accounts.obligation;
     if *obligation_info.owner != RELEND_PROGRAM {
+        msg!("Obligation info {} {} ", obligation_info.owner, RELEND_PROGRAM);
+
         msg!("Obligation provided is not owned by the lending program");
         return Err(ReearnErrorCode::InvalidAccountOwner.into());
     }

@@ -1,6 +1,7 @@
 SOLANA_CONFIG=$1;
 USDC_RESERVE=$2;
-PROGRAM_ID=$3
+OBLIGATION=$3;
+PROGRAM_ID=$4
 
 
 echo "SOLANA CONFIG $SOLANA_CONFIG";
@@ -31,3 +32,12 @@ npx ts-node src/index.ts \
     --reward $REW_TOKEN_MINT \
     --reward_decimals 6 \
     --apy 1.2 \
+
+echo "SUPPLY TO EARN"
+npx ts-node src/index.ts \
+    supply-to-earn \
+    --program_id $PROGRAM_ID \
+    --network_url http://127.0.0.1:8899 \
+    --source ~/.config/renec/id.json \
+    --reserve $USDC_RESERVE \
+    --obligation $OBLIGATION \
