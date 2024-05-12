@@ -91,6 +91,10 @@ export USDC_RESERVE_COLLATERAL_SUPPLY_ADDRESS=`echo "$USDC_RESERVE_OUTPUT" | gre
 export USDC_RESERVE_LIQUIDITY_ADDRESS=`echo "$USDC_RESERVE_OUTPUT" | grep "Adding liquidity supply" | awk '{print $NF}'`;
 export USDC_RESERVE_LIQUIDITY_FEE_RECEIVER_ADDRESS=`echo "$USDC_RESERVE_OUTPUT" | grep "Adding liquidity fee receiver" | awk '{print $NF}'`;
 
+export USDC_USER_COLLATERAL_SUPPLY_ADDRESS=`echo "$USDC_RESERVE_OUTPUT" | grep "Adding user collateral" | awk '{print $NF}'`;
+echo "USER_COLLATERAL ${USDC_USER_COLLATERAL_SUPPLY_ADDRESS}"
+echo "USDC RESERVE ADDRESS ${USDC_RESERVE_ADDRESS}"
+
 # Run templating command 
 curl $CONFIG_TEMPLATE_FILE | envsubst 
 
@@ -105,5 +109,16 @@ INIT_OBLIGATION_OUTPUT=`./target/debug/relend-program \
   `;
 
 ECHO "$INIT_OBLIGATION_OUTPUT"
-
 export OBLIGATION_ADDRESS=`echo "$INIT_OBLIGATION_OUTPUT" | grep "Adding obligation" | awk '{print $NF}'`;
+
+ECHO "DEPOSIT OBLIGATION FOR OWNER"
+DEPOSIT_OBLIGATION_OUTPUT=`./target/debug/relend-program \
+  --program $PROGRAM_ID deposit-obligation \
+  --market $MARKET_ADDR \
+  --reserve $USDC_RESERVE_ADDRESS \
+  --user_collateral_pubkey $USDC_USER_COLLATERAL_SUPPLY_ADDRESS \
+  --amount 100000 \
+  --verbose
+  `;
+
+echo "$DEPOSIT_OBLIGATION_OUTPUT"

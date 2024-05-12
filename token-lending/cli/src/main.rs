@@ -14,6 +14,7 @@ use relend_sdk::{
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::rpc_config::{RpcProgramAccountsConfig, RpcSendTransactionConfig};
 use solana_client::{rpc_config::RpcAccountInfoConfig, rpc_filter::RpcFilterType};
+use solana_program::msg;
 use solana_program::system_instruction::create_account_with_seed;
 use solana_sdk::{commitment_config::CommitmentLevel, compute_budget::ComputeBudgetInstruction};
 
@@ -58,6 +59,7 @@ use {
 
 use spl_associated_token_account::get_associated_token_address;
 use spl_associated_token_account::instruction::create_associated_token_account;
+use relend_sdk::instruction::deposit_obligation_collateral;
 
 struct Config {
     rpc_client: RpcClient,
@@ -1020,6 +1022,46 @@ fn main() {
                         .help("Lending market address"),
                 )
         )
+        .subcommand(
+            SubCommand::with_name("deposit-obligation")
+                .about("Deposit collateral into owner obligation")
+                .arg(
+                    Arg::with_name("lending_market")
+                        .long("market")
+                        .validator(is_pubkey)
+                        .value_name("PUBKEY")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Lending market address"),
+                )
+                .arg(
+                    Arg::with_name("liquidity_amount")
+                        .long("amount")
+                        .validator(is_amount)
+                        .value_name("DECIMAL_AMOUNT")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Initial amount of collateral to deposit into the new reserve"),
+                )
+                .arg(
+                    Arg::with_name("reserve")
+                        .long("reserve")
+                        .validator(is_pubkey)
+                        .value_name("PUBKEY")
+                        .takes_value(true)
+                        .required(true)
+                        .help("reserve pubkey"),
+                )
+                .arg(
+                    Arg::with_name("user_collateral_pubkey")
+                        .long("user_collateral_pubkey")
+                        .validator(is_pubkey)
+                        .value_name("PUBKEY")
+                        .takes_value(true)
+                        .required(true)
+                        .help("user collateral pubkey"),
+                )
+        )
         .get_matches();
 
     let mut wallet_manager = None;
@@ -1354,6 +1396,13 @@ fn main() {
             let lending_market_pubkey = pubkey_of(arg_matches, "lending_market").unwrap();
             command_init_obligation(&mut config, lending_market_pubkey)
         }
+        ("deposit-obligation", Some(args_mathes)) => {
+            let lending_market_pubkey = pubkey_of(args_mathes, "lending_market").unwrap();
+            let collateral_amount = value_of(args_mathes, "liquidity_amount").unwrap();
+            let reserve_pubkey = pubkey_of(args_mathes, "reserve").unwrap();
+            let user_collateral_pubkey = pubkey_of(args_mathes, "user_collateral_pubkey").unwrap();
+            command_deposit_obligation(&mut config, lending_market_pubkey, reserve_pubkey, collateral_amount, user_collateral_pubkey)
+        }
         _ => unreachable!(),
     }
     .map_err(|err| {
@@ -1659,7 +1708,7 @@ fn command_add_reserve(
     let collateral_supply_keypair = Keypair::new();
     let liquidity_supply_keypair = Keypair::new();
     let user_collateral_keypair = Keypair::new();
-    let user_transfer_authority_keypair = Keypair::new();
+    // let user_transfer_authority_keypair = &config.fee_payer;
 
     println!("Adding reserve {}", reserve_keypair.pubkey());
     if config.verbose {
@@ -1683,10 +1732,10 @@ fn command_add_reserve(
             "Adding user collateral {}",
             user_collateral_keypair.pubkey()
         );
-        println!(
-            "Adding user transfer authority {}",
-            user_transfer_authority_keypair.pubkey()
-        );
+        // println!(
+        //     "Adding user transfer authority {}",
+        //     user_transfer_authority_keypair.pubkey()
+        // );
     }
 
     let reserve_balance = config
@@ -1772,7 +1821,7 @@ fn command_add_reserve(
             approve(
                 &spl_token::id(),
                 &source_liquidity_pubkey,
-                &user_transfer_authority_keypair.pubkey(),
+                &config.fee_payer.pubkey(),
                 &source_liquidity_owner_keypair.pubkey(),
                 &[],
                 liquidity_amount,
@@ -1794,7 +1843,7 @@ fn command_add_reserve(
                 switchboard_feed_pubkey,
                 lending_market_pubkey,
                 lending_market_owner_keypair.pubkey(),
-                user_transfer_authority_keypair.pubkey(),
+                config.fee_payer.pubkey(),
             ),
             revoke(
                 &spl_token::id(),
@@ -1843,7 +1892,6 @@ fn command_add_reserve(
             config.fee_payer.as_ref(),
             &source_liquidity_owner_keypair,
             &lending_market_owner_keypair,
-            &user_transfer_authority_keypair,
         ],
         message_3,
         recent_blockhash,
@@ -2334,6 +2382,64 @@ fn command_init_obligation(
                 config.lending_program_id,
                 obligation_pubkey,
                 lending_market_pubkey,
+                config.fee_payer.pubkey(),
+            )
+        ],
+        Some(&config.fee_payer.pubkey()),
+        &recent_blockhash,
+    );
+
+    let transaction = Transaction::new(
+        &vec![config.fee_payer.as_ref()],
+        message,
+        recent_blockhash,
+    );
+
+    send_transaction(config, transaction)?;
+    Ok(())
+}
+
+fn command_deposit_obligation(
+    config: &mut Config,
+    lending_market_pubkey: Pubkey,
+    reserve_pubkey: Pubkey,
+    collateral_amount: u64,
+    user_collateral_pubkey: Pubkey,
+) -> CommandResult {
+    msg!("Perform deposit obligation {}", collateral_amount);
+    let obligation_pubkey = Pubkey::create_with_seed(
+        &config.fee_payer.pubkey(),
+        &lending_market_pubkey.to_string().as_str()[0..32],
+        &config.lending_program_id,
+    )?;
+    let recent_blockhash = config.rpc_client.get_latest_blockhash()?;
+    let deposit_reserve = {
+        let data = config
+            .rpc_client
+            .get_account(&reserve_pubkey)
+            .unwrap();
+        Reserve::unpack(&data.data).unwrap()
+    };
+    let user_collateral_data = {
+        let data = config
+            .rpc_client
+            .get_account(&user_collateral_pubkey)
+            .unwrap();
+        spl_token::state::Account::unpack(&data.data).unwrap()
+    };
+
+    msg!("User collateral mint {} authority {}", user_collateral_data.mint, user_collateral_data.owner);
+    let message = Message::new_with_blockhash(
+        &[
+            deposit_obligation_collateral(
+                config.lending_program_id,
+                collateral_amount,
+                user_collateral_pubkey,
+                deposit_reserve.collateral.supply_pubkey,
+                reserve_pubkey,
+                obligation_pubkey,
+                lending_market_pubkey,
+                config.fee_payer.pubkey(),
                 config.fee_payer.pubkey(),
             )
         ],
