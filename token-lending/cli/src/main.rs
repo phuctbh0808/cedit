@@ -6,7 +6,7 @@ use relend_program::{
 use relend_sdk::{
     instruction::{
         liquidate_obligation_and_redeem_reserve_collateral, redeem_reserve_collateral,
-        refresh_obligation, refresh_reserve,
+        refresh_obligation, refresh_reserve, init_obligation,
     },
     state::Obligation,
     state::ReserveType,
@@ -14,6 +14,7 @@ use relend_sdk::{
 use solana_account_decoder::UiAccountEncoding;
 use solana_client::rpc_config::{RpcProgramAccountsConfig, RpcSendTransactionConfig};
 use solana_client::{rpc_config::RpcAccountInfoConfig, rpc_filter::RpcFilterType};
+use solana_program::system_instruction::create_account_with_seed;
 use solana_sdk::{commitment_config::CommitmentLevel, compute_budget::ComputeBudgetInstruction};
 
 mod lending_state;
@@ -133,7 +134,7 @@ const SWITCHBOARD_PROGRAM_ID_DEV: &str = "7azgmy1pFXHikv36q1zZASvFq5vFa39TT9NweV
 fn main() {
     solana_logger::setup_with_default("solana=info");
 
-    let default_lending_program_id: &str = &relend_sdk::relend_mainnet::id().to_string();
+    let default_lending_program_id: &str = "BtdHuy25QeiQg8TkgFyHkFXJbezhNE1tyAC7sAMjzh24";
 
     let matches = App::new(crate_name!())
         .about(crate_description!())
@@ -1006,6 +1007,19 @@ fn main() {
                         .help("Risk authority address"),
                 )
         )
+        .subcommand(
+            SubCommand::with_name("init-obligation")
+                .about("Initialize a new obligation for a user")
+                .arg(
+                    Arg::with_name("lending_market")
+                        .long("market")
+                        .validator(is_pubkey)
+                        .value_name("PUBKEY")
+                        .takes_value(true)
+                        .required(true)
+                        .help("Lending market address"),
+                )
+        )
         .get_matches();
 
     let mut wallet_manager = None;
@@ -1335,6 +1349,10 @@ fn main() {
                 lending_market_owner_keypair,
                 risk_authority_pubkey,
             )
+        }
+        ("init-obligation", Some(arg_matches)) => {
+            let lending_market_pubkey = pubkey_of(arg_matches, "lending_market").unwrap();
+            command_init_obligation(&mut config, lending_market_pubkey)
         }
         _ => unreachable!(),
     }
@@ -2279,6 +2297,52 @@ fn command_set_lending_market_risk_authority(
 
     let transaction = Transaction::new(
         &vec![config.fee_payer.as_ref(), &lending_market_owner_keypair],
+        message,
+        recent_blockhash,
+    );
+
+    send_transaction(config, transaction)?;
+    Ok(())
+}
+
+fn command_init_obligation(
+    config: &mut Config,
+    lending_market_pubkey: Pubkey,
+) -> CommandResult {
+    let obligation_pubkey = Pubkey::create_with_seed(
+        &config.fee_payer.pubkey(),
+    &lending_market_pubkey.to_string().as_str()[0..32],
+        &config.lending_program_id,
+    )?;
+    println!("Adding obligation {}", obligation_pubkey);
+    let obligation_balance = config
+        .rpc_client
+        .get_minimum_balance_for_rent_exemption(Obligation::LEN)?;
+    let recent_blockhash = config.rpc_client.get_latest_blockhash()?;
+    let message = Message::new_with_blockhash(
+        &[
+            create_account_with_seed(
+                &config.fee_payer.pubkey(),
+                &obligation_pubkey,
+                &config.fee_payer.pubkey(),
+                &lending_market_pubkey.to_string().as_str()[0..32],
+                obligation_balance,
+                Obligation::LEN as u64,
+                &config.lending_program_id,
+            ),
+            init_obligation(
+                config.lending_program_id,
+                obligation_pubkey,
+                lending_market_pubkey,
+                config.fee_payer.pubkey(),
+            )
+        ],
+        Some(&config.fee_payer.pubkey()),
+        &recent_blockhash,
+    );
+
+    let transaction = Transaction::new(
+        &vec![config.fee_payer.as_ref()],
         message,
         recent_blockhash,
     );

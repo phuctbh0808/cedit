@@ -95,3 +95,15 @@ export USDC_RESERVE_LIQUIDITY_FEE_RECEIVER_ADDRESS=`echo "$USDC_RESERVE_OUTPUT" 
 curl $CONFIG_TEMPLATE_FILE | envsubst 
 
 echo "USDC RESERVE $USDC_RESERVE_ADDRESS"
+
+echo "INIT OBLIGATION FOR OWNER"
+
+INIT_OBLIGATION_OUTPUT=`./target/debug/relend-program \
+  --program $PROGRAM_ID init-obligation \
+  --market $MARKET_ADDR \
+  --verbose
+  `;
+
+ECHO "$INIT_OBLIGATION_OUTPUT"
+
+export OBLIGATION_ADDRESS=`echo "$INIT_OBLIGATION_OUTPUT" | grep "Adding obligation" | awk '{print $NF}'`;
