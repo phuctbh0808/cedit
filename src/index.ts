@@ -27,6 +27,7 @@ import { BN } from "bn.js";
 import { RelendAction, RelendMarket } from "relend-adapter";
 import BigNumber from "bignumber.js";
 import { IDL } from "./reearn_program";
+import { delay } from "@renec-foundation/oracle-sdk";
 
 const program = new Command();
 
@@ -733,12 +734,18 @@ program
     const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
     recoverTx.sign(keypair);
 
-    console.log("Init successfully, retrieving config account info");
-    await connection.sendRawTransaction(recoverTx.serialize());
+    try {
+      const tx = await connection.sendRawTransaction(recoverTx.serialize());
+      console.log("Init successfully, retrieving config account info", tx);
+    } catch (error) {
+      console.error(error);
+      throw error;
+    }
     [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
       [Buffer.from(BTE_CONFIG_SEED), owner.toBuffer()],
       programId,
     );
+    await delay(5000);
     const configAccountInfo = await program.account.config.fetch(configAccount);
     console.log(configAccountInfo);
   });
@@ -985,7 +992,8 @@ program
         const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
         recoverTx.sign(keypair);
 
-        await connection.sendRawTransaction(recoverTx.serialize());
+        const txHash = await connection.sendRawTransaction(recoverTx.serialize());
+        console.log("Supply apy account success {}", txHash);
       });
 
     console.log("Reearn supply vault \n");
