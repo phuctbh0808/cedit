@@ -1111,4 +1111,90 @@ program
     console.log("Reserve reward account", reserveRewardAccount);
   })
 
+program
+  .command("claim-ste-reward")
+  .option("--program_id <string>", "")
+  .option("--source <string>", "")
+  .option("--network_url <string>", "")
+  .option("--reserve <string>", "Pubkey")
+  .option("--reward <string>", "Pubkey")
+  .option("--obligation <string>", "Pubkey")
+  .description("Supply token to earn")
+  .action(async (params) => {
+    let { program_id, source, network_url, reserve, reward, obligation } = params;
+
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+    let sourceOwner = keypair.publicKey;
+    let configAccount: PublicKey;
+    let supplyApyAccount: PublicKey;
+    let bump: number;
+    let supplyApyBump: number;
+    const VAULT_SEED = "onepiece";
+    const CONFIG_SEED = "supernova";
+    const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
+    const reserveKey = new PublicKey(reserve);
+    const obligationKey = new PublicKey(obligation);
+    const rewardKey = new PublicKey(reward);
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(CONFIG_SEED), keypair.publicKey.toBuffer()],
+      programId,
+    );
+
+    [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(SUPPLY_REWARD_SEED), reserveKey.toBuffer()],
+      programId,
+    );
+      const [vaultAccount] = anchor.web3.PublicKey.findProgramAddressSync(
+        [Buffer.from(VAULT_SEED), configAccount.toBuffer()],
+        programId,
+      );
+     const toAta = await getOrCreateAssociatedTokenAccount(connection, keypair, rewardKey, keypair.publicKey);
+     console.log("toAta", toAta.address.toBase58());
+      const vaultAta = await getOrCreateAssociatedTokenAccount(connection, keypair, rewardKey, vaultAccount, true);
+     console.log("Vault ", vaultAta);
+     const [reserveAccount, reserveBump] = anchor.web3.PublicKey.findProgramAddressSync(
+        [Buffer.from(RESERVE_SEED), reserveKey.toBuffer(), obligationKey.toBuffer()],
+        programId,
+      );
+
+        const instructions = [
+          await program.methods
+            .claimSteReward(keypair.publicKey)
+            .accounts({
+              authority: keypair.publicKey,
+              tokenAccount: toAta.address,
+              vault: vaultAccount,
+              vaultTokenAccount: vaultAta.address,
+              mint: rewardKey,
+              obligation: obligationKey,
+              reserve: reserveKey,
+              reserveReward: reserveAccount,
+              supplyApy: supplyApyAccount,
+              configAccount,
+              tokenProgram: TOKEN_PROGRAM_ID,
+            })
+            .instruction(),
+        ];
+
+        const tx = new Transaction().add(...instructions);
+        tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+        tx.feePayer = sourceOwner;
+        const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+        recoverTx.sign(keypair);
+
+        try {
+          const txHash = await connection.sendRawTransaction(recoverTx.serialize());
+          console.log("Claim ste success", txHash);
+        } catch (error) {
+          console.error(error);
+          throw error;
+        }
+  })
+
 program.parse();
