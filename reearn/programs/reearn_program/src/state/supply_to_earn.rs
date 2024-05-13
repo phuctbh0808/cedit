@@ -22,11 +22,14 @@ pub struct SupplyApy {
     pub apy: f32,
     pub reward_token: Pubkey,
     pub token_decimals: u8,
+    pub start_time: u32,
+    pub end_time: u32,
     pub initialized: bool,
+    pub _reserve_space: [u128; 6],
 }
 
 impl SupplyApy {
-    pub const LEN: usize = 8 + 32 + 4 + 32 + 1 + 1;
+    pub const LEN: usize = 8 + 32 + 4 + 32 + 32 * 2 + 1 + 1 + 16 * 6;
 
     pub fn calculate_reward(&self, supply_amount: u64, supply_decimals: u32, duration: i64) -> Result<u64, ProgramError> {
         let supply_amount = Decimal::from(supply_amount)
