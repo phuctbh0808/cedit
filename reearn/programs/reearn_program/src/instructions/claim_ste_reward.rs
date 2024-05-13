@@ -111,7 +111,7 @@ pub fn exec(
             msg!("Calculating reward");
             let current_reward = supply_apy.calculate_reward(
                 collateral.deposited_amount, reserve_decimals as u32,
-                 clock.unix_timestamp - reserve_reward.last_supply)?;
+                 clock.unix_timestamp, reserve_reward.last_supply)?;
             let total_claim_reward = reserve_reward.accumulated_reward_amount + current_reward;
             reserve_reward.last_supply = clock.unix_timestamp;
             reserve_reward.accumulated_reward_amount = 0;
