@@ -68,6 +68,13 @@ pub mod reearn_program {
         init_reserve_reward::exec(ctx, reserve, reward, apy, token_decimals)
     }
 
+    pub fn close_reserve_reward(
+        ctx: Context<CloseReserveReward>,
+        reserve: Pubkey,
+    ) -> ProgramResult {
+        close_reserve_reward::exec(ctx, reserve)
+    }
+
     pub fn supply_to_earn(
         ctx: Context<SupplyToEarn>,
         wallet: Pubkey,
