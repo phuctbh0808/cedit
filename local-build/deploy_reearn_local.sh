@@ -1,13 +1,15 @@
 SOLANA_CONFIG=$1;
 USDC_RESERVE=$2;
 OBLIGATION=$3;
-PROGRAM_ID=$4
 
 
 echo "SOLANA CONFIG $SOLANA_CONFIG";
 
 MARKET_OWNER=`solana --config $SOLANA_CONFIG address`;
 echo "OWNER ${MARKET_OWNER}"
+
+PROGRAM_KEYPAIR_FILE="target/deploy/reearn_program-keypair.json"
+PROGRAM_ID=`solana --config $SOLANA_CONFIG -k $PROGRAM_KEYPAIR_FILE address`
 
 echo "Creating Reward token";
 export REW_TOKEN_MINT=`spl-token --config $SOLANA_CONFIG create-token --decimals 6 |  awk '{print $3}'`;

@@ -1,10 +1,13 @@
 #!/bin/bash
 echo "Running deploy script...";
 SOLANA_CONFIG=$1;
-PROGRAM_ID=$2;
+#
 # Get OWNER from keypair_path key of the solana config file
 OWNER=`grep 'keypair_path:' $SOLANA_CONFIG | awk '{print $2}'`;
 MARKET_OWNER=`solana --config $SOLANA_CONFIG address`;
+
+PROGRAM_KEYPAIR_FILE="target/deploy/relend_program-keypair.json"
+PROGRAM_ID=`solana --config $SOLANA_CONFIG -k $PROGRAM_KEYPAIR_FILE address`
 
 spl-token --config $SOLANA_CONFIG unwrap;
 
