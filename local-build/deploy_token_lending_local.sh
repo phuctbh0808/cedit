@@ -50,7 +50,7 @@ USDC_RESERVE_OUTPUT=`target/debug/relend-program \
   --source-owner      $OWNER \
   --market            $MARKET_ADDR \
   --source            $USDC_TOKEN_ACCOUNT \
-  --amount            500000  \
+  --amount            2000000  \
   --pyth-product      6NpdXrQEpmDZ3jZKmM2rhdmkd3H6QAk23j2x8bkXcHKA \
   --pyth-price        5SSkXsEKQepHHAewytPVwdej4epN1nxgLVM84L4KXgy7 \
   --switchboard-feed  CZx29wKMUxaJDq6aLVQTdViPL754tTR64NAgQBUGxxHb \
@@ -67,8 +67,8 @@ USDC_RESERVE_OUTPUT=`target/debug/relend-program \
   --max-liquidation-bonus 10 \
   --host-fee-percentage 50 \
   --max-utilization-rate 100 \
-  --deposit-limit 1000000 \
-  --borrow-limit 900000 \
+  --deposit-limit 3000000 \
+  --borrow-limit 2500000 \
   --protocol-liquidation-fee 5 \
   --protocol-take-rate 2 \
   --verbose`;
@@ -120,7 +120,7 @@ DEPOSIT_OBLIGATION_OUTPUT=`./target/debug/relend-program \
   --market $MARKET_ADDR \
   --reserve $USDC_RESERVE_ADDRESS \
   --user_collateral_pubkey $USDC_USER_COLLATERAL_SUPPLY_ADDRESS \
-  --amount 100000 \
+  --amount 1500000 \
   --verbose
   `;
 

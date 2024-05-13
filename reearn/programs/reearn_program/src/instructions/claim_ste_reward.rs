@@ -110,7 +110,7 @@ pub fn exec(
     match obligation.find_collateral_in_deposits(reserve_reward.reserve) {
         Ok((collateral, _)) => {
             let reserve_decimals = reserve.liquidity.mint_decimals;
-            msg!("Calculating reward");
+            msg!("Calculating reward {} {} {} {}", collateral.deposited_amount, reserve_decimals, clock.unix_timestamp, reserve_reward.last_supply);
             let current_reward = supply_apy.calculate_reward(
                 collateral.deposited_amount, reserve_decimals as u32,
                  clock.unix_timestamp - reserve_reward.last_supply)?;
