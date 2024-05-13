@@ -124,6 +124,8 @@ pub fn exec(
             let config_account = &ctx.accounts.config_account;
             let config_key = config_account.clone().key();
             let bump = config_account.vault_bump[0];
+
+            msg!("Transferring reward {} {}", collateral.deposit_reserve, total_claim_reward);
             let signer: &[&[&[u8]]] = &[&[VAULT_SEED, config_key.as_ref(), &[bump]]];
             let cpi_ctx = CpiContext::new_with_signer(
                 token_program.to_account_info(),
@@ -135,7 +137,6 @@ pub fn exec(
                 signer,
             );
         
-            msg!("Transfering reward");
             token::transfer(cpi_ctx, total_claim_reward)?;
         }
         Err(e) => {
