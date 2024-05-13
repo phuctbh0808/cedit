@@ -64,8 +64,8 @@ pub mod reearn_program {
         reward: Pubkey,
         apy: f32,
         token_decimals: u8,
-        start_time: u32,
-        end_time: u32,
+        start_time: u64,
+        end_time: u64,
     ) -> ProgramResult {
         init_reserve_reward::exec(ctx, reserve, reward, apy, token_decimals, start_time, end_time)
     }
