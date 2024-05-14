@@ -28,8 +28,6 @@ import { RelendAction, RelendMarket } from "relend-adapter";
 import BigNumber from "bignumber.js";
 import { IDL } from "./reearn_program";
 import { delay } from "@renec-foundation/oracle-sdk";
-import { config } from "dotenv";
-import { start } from "repl";
 
 const program = new Command();
 
@@ -1031,6 +1029,10 @@ program
       programId,
     );
     console.log(vaultAccount.toBase58());
+
+    await delay(5000);
+    const supplyApyData = await program.account.supplyApy.fetch(supplyApyAccount);
+    console.log("Supply apy data: ", supplyApyData);
   });
 
 program
