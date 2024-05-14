@@ -993,8 +993,9 @@ program
             .instruction(),
         ];
         console.log("Create create instruction success");
+        console.log("ERROR CODE ", error.code);
 
-        if (error.code === 'ERR_OUT_OF_RANG') {
+        if (error.code === 'ERR_OUT_OF_RANGE') {
           console.log("Close old account");
           // If deseriallize error => Old account => Close before initializing => Add close_instruction before initializing
           instructions.unshift(
