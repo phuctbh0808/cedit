@@ -28,6 +28,8 @@ import { RelendAction, RelendMarket } from "relend-adapter";
 import BigNumber from "bignumber.js";
 import { IDL } from "./reearn_program";
 import { delay } from "@renec-foundation/oracle-sdk";
+import { config } from "dotenv";
+import { start } from "repl";
 
 const program = new Command();
 
@@ -957,7 +959,7 @@ program
         console.log("Supply apy account found, updating it");
         const instructions = [
           await program.methods
-            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, start_time, end_time)
+            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
             .accounts({
               authority: sourceOwner,
               supplyApy: supplyApyAccount,
@@ -976,9 +978,11 @@ program
       })
       .catch(async (error) => {
         console.log("Supply apy account not found or serialized error, creating new one");
+        console.log("Information");
+        console.log({reward, apy, reward_decimals, start_time, end_time, supplyApyAccount, configAccount, sourceOwner });
         const instructions = [
           await program.methods
-            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, start_time, end_time)
+            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
             .accounts({
               feePayer: sourceOwner,
               authority: sourceOwner,
@@ -988,8 +992,10 @@ program
             })
             .instruction(),
         ];
+        console.log("Create create instruction success");
 
         if (error.code === 'ERR_OUT_OF_RANG') {
+          console.log("Close old account");
           // If deseriallize error => Old account => Close before initializing => Add close_instruction before initializing
           instructions.unshift(
             await program.methods
@@ -1004,6 +1010,8 @@ program
             .instruction(),
           )
         }
+
+        console.log("Instruction length ", instructions.length);
 
         const tx = new Transaction().add(...instructions);
         tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;

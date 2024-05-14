@@ -23,7 +23,7 @@ solana program deploy reearn/target/deploy/reearn_program.so
 echo "INIT REEARN POOL"
 npx ts-node src/index.ts init-reearn-pool --network_url http://127.0.0.1:8899 --program_id $PROGRAM_ID --authority ~/.config/renec/id.json
 
-echo "ENABLE GAUGE"
+# echo "ENABLE GAUGE"
 npx ts-node src/index.ts \
     enable-supply-gauge \
     --program_id $PROGRAM_ID \
@@ -34,6 +34,8 @@ npx ts-node src/index.ts \
     --reward $REW_TOKEN_MINT \
     --reward_decimals 6 \
     --apy 1.2 \
+    --start_time 1000 \
+    --end_time 2000
 
 echo "SUPPLY TO EARN"
 npx ts-node src/index.ts \
