@@ -112,7 +112,7 @@ pub fn exec(ctx: Context<SupplyToEarn>, wallet: Pubkey) -> ProgramResult {
                 );
                 let current_reward = supply_apy.calculate_reward(
                     collateral.deposited_amount, reserve_decimals as u32,
-                    clock.unix_timestamp - reserve_reward.last_supply,
+                    clock.unix_timestamp, reserve_reward.last_supply,
                 )?;
                 reserve_reward.accumulated_reward_amount =
                     reserve_reward.accumulated_reward_amount + current_reward;

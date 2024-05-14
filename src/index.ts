@@ -904,9 +904,11 @@ program
   .option("--reward <string>", "Pubkey")
   .option("--reward_decimals <number>", "")
   .option("--apy <number>", "ration decimal number")
+  .option("--start_time <number>", "Start time reward")
+  .option("--end_time <number>", "End time reward")
   .description("Enable gauge for supply reserve")
   .action(async (params) => {
-    let { program_id, source, network_url, admin_key, reserve, reward, reward_decimals, apy } =
+    let { program_id, source, network_url, admin_key, reserve, reward, reward_decimals, apy, start_time, end_time } =
       params;
 
     console.log("Enable supply gauge");
@@ -955,7 +957,7 @@ program
         console.log("Supply apy account found, updating it");
         const instructions = [
           await program.methods
-            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals)
+            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, start_time, end_time)
             .accounts({
               authority: sourceOwner,
               supplyApy: supplyApyAccount,
@@ -972,11 +974,11 @@ program
 
         await connection.sendRawTransaction(recoverTx.serialize());
       })
-      .catch(async () => {
-        console.log("Supply apy account not found, creating new one");
+      .catch(async (error) => {
+        console.log("Supply apy account not found or serialized error, creating new one");
         const instructions = [
           await program.methods
-            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals)
+            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, start_time, end_time)
             .accounts({
               feePayer: sourceOwner,
               authority: sourceOwner,
@@ -986,6 +988,22 @@ program
             })
             .instruction(),
         ];
+
+        if (error.code === 'ERR_OUT_OF_RANG') {
+          // If deseriallize error => Old account => Close before initializing => Add close_instruction before initializing
+          instructions.unshift(
+            await program.methods
+            .closeReserveReward(reserveKey)
+            .accounts({
+              feePayer: sourceOwner,  
+              authority: sourceOwner,
+              supplyApy: supplyApyAccount,
+              configAccount,
+              systemProgram: SystemProgram.programId,
+            })
+            .instruction(),
+          )
+        }
 
         const tx = new Transaction().add(...instructions);
         tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;

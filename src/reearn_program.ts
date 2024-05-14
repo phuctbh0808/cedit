@@ -337,6 +337,56 @@ export type ReearnProgram = {
         {
           "name": "tokenDecimals",
           "type": "u8"
+        },
+        {
+          "name": "startTime",
+          "type": "u64"
+        },
+        {
+          "name": "endTime",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "closeReserveReward",
+      "accounts": [
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
+          "name": "configAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "reserve",
+          "type": "publicKey"
         }
       ]
     },
@@ -483,6 +533,14 @@ export type ReearnProgram = {
         {
           "name": "tokenDecimals",
           "type": "u8"
+        },
+        {
+          "name": "startTime",
+          "type": "u64"
+        },
+        {
+          "name": "endTime",
+          "type": "u64"
         }
       ]
     }
@@ -620,8 +678,25 @@ export type ReearnProgram = {
             "type": "u8"
           },
           {
+            "name": "startTime",
+            "type": "u64"
+          },
+          {
+            "name": "endTime",
+            "type": "u64"
+          },
+          {
             "name": "initialized",
             "type": "bool"
+          },
+          {
+            "name": "reserveSpace",
+            "type": {
+              "array": [
+                "u128",
+                6
+              ]
+            }
           }
         ]
       }
@@ -1014,6 +1089,56 @@ export const IDL: ReearnProgram = {
         {
           "name": "tokenDecimals",
           "type": "u8"
+        },
+        {
+          "name": "startTime",
+          "type": "u64"
+        },
+        {
+          "name": "endTime",
+          "type": "u64"
+        }
+      ]
+    },
+    {
+      "name": "closeReserveReward",
+      "accounts": [
+        {
+          "name": "feePayer",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
+          "name": "authority",
+          "isMut": true,
+          "isSigner": true
+        },
+        {
+          "name": "supplyApy",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK"
+          ]
+        },
+        {
+          "name": "configAccount",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        }
+      ],
+      "args": [
+        {
+          "name": "reserve",
+          "type": "publicKey"
         }
       ]
     },
@@ -1160,6 +1285,14 @@ export const IDL: ReearnProgram = {
         {
           "name": "tokenDecimals",
           "type": "u8"
+        },
+        {
+          "name": "startTime",
+          "type": "u64"
+        },
+        {
+          "name": "endTime",
+          "type": "u64"
         }
       ]
     }
@@ -1297,8 +1430,25 @@ export const IDL: ReearnProgram = {
             "type": "u8"
           },
           {
+            "name": "startTime",
+            "type": "u64"
+          },
+          {
+            "name": "endTime",
+            "type": "u64"
+          },
+          {
             "name": "initialized",
             "type": "bool"
+          },
+          {
+            "name": "reserveSpace",
+            "type": {
+              "array": [
+                "u128",
+                6
+              ]
+            }
           }
         ]
       }

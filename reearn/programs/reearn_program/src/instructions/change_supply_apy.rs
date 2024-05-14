@@ -27,11 +27,15 @@ pub fn exec(
     reward: Pubkey,
     apy: f32,
     token_decimals: u8,
+    start_time: u64,
+    end_time: u64,
 ) -> ProgramResult {
     let supply_apy = &mut ctx.accounts.supply_apy;
     supply_apy.reward_token = reward;
     supply_apy.token_decimals = token_decimals;
     supply_apy.apy = apy;
+    supply_apy.start_time = start_time;
+    supply_apy.end_time = end_time;
 
     Ok(())
 }

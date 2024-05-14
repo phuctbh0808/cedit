@@ -113,7 +113,7 @@ pub fn exec(
             msg!("Calculating reward {} {} {} {}", collateral.deposited_amount, reserve_decimals, clock.unix_timestamp, reserve_reward.last_supply);
             let current_reward = supply_apy.calculate_reward(
                 collateral.deposited_amount, reserve_decimals as u32,
-                 clock.unix_timestamp - reserve_reward.last_supply)?;
+                 clock.unix_timestamp, reserve_reward.last_supply)?;
             let total_claim_reward = reserve_reward.accumulated_reward_amount + current_reward;
             reserve_reward.last_supply = clock.unix_timestamp;
             reserve_reward.accumulated_reward_amount = 0;
@@ -127,7 +127,7 @@ pub fn exec(
             let config_key = config_account.clone().key();
             let bump = config_account.vault_bump[0];
 
-            msg!("Reearn_program:claim_ste_reward_ins:{}:{}", collateral.deposit_reserve, total_claim_reward);
+            msg!("reearn_program:claim_ste_reward_ins:{}:{}:{}", supply_apy.reward_token, collateral.deposit_reserve, total_claim_reward);
             let signer: &[&[&[u8]]] = &[&[VAULT_SEED, config_key.as_ref(), &[bump]]];
             let cpi_ctx = CpiContext::new_with_signer(
                 token_program.to_account_info(),
@@ -139,8 +139,7 @@ pub fn exec(
                 signer,
             );
 
-            msg!("Transferring reward");
-        
+            msg!("Transfering reward");
             token::transfer(cpi_ctx, total_claim_reward)?;
         }
         Err(e) => {

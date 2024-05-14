@@ -42,4 +42,5 @@ if [[ ! -d $TARGET_DIR ]]; then
     mkdir -p $TARGET_DIR
 fi
 cp target/deploy/$REEARN_PROGRAM-keypair.json ../target/deploy
+cp target/types/$REEARN_PROGRAM.ts ../src/
 echo "Build successfully"
