@@ -949,7 +949,7 @@ program
         console.log("Supply apy account found, updating it");
         const instructions = [
           await program.methods
-            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals)
+            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, start_time, end_time)
             .accounts({
               authority: sourceOwner,
               supplyApy: supplyApyAccount,

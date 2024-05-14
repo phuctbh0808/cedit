@@ -533,6 +533,14 @@ export type ReearnProgram = {
         {
           "name": "tokenDecimals",
           "type": "u8"
+        },
+        {
+          "name": "startTime",
+          "type": "u64"
+        },
+        {
+          "name": "endTime",
+          "type": "u64"
         }
       ]
     }
@@ -1277,6 +1285,14 @@ export const IDL: ReearnProgram = {
         {
           "name": "tokenDecimals",
           "type": "u8"
+        },
+        {
+          "name": "startTime",
+          "type": "u64"
+        },
+        {
+          "name": "endTime",
+          "type": "u64"
         }
       ]
     }
