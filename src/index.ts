@@ -27,6 +27,7 @@ import { BN } from "bn.js";
 import { RelendAction, RelendMarket } from "relend-adapter";
 import BigNumber from "bignumber.js";
 import { IDL } from "./reearn_program";
+import { delay } from "@renec-foundation/oracle-sdk";
 
 const program = new Command();
 
@@ -949,7 +950,7 @@ program
         console.log("Supply apy account found, updating it");
         const instructions = [
           await program.methods
-            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, start_time, end_time)
+            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
             .accounts({
               authority: sourceOwner,
               supplyApy: supplyApyAccount,
@@ -970,7 +971,7 @@ program
         console.log("Supply apy account not found or serialized error, creating new one");
         const instructions = [
           await program.methods
-            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, start_time, end_time)
+            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
             .accounts({
               feePayer: sourceOwner,
               authority: sourceOwner,
@@ -981,7 +982,7 @@ program
             .instruction(),
         ];
 
-        if (error.code === 'ERR_OUT_OF_RANG') {
+        if (error.code === 'ERR_OUT_OF_RANGE') {
           // If deseriallize error => Old account => Close before initializing => Add close_instruction before initializing
           instructions.unshift(
             await program.methods
@@ -1013,6 +1014,10 @@ program
       programId,
     );
     console.log(vaultAccount.toBase58());
+
+    await delay(5000);
+    const supplyApyData = await program.account.supplyApy.fetch(supplyApyAccount);
+    console.log("Supply apy data: ", supplyApyData);
   });
 
 program
