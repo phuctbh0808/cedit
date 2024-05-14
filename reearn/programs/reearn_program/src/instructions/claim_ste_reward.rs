@@ -125,7 +125,7 @@ pub fn exec(
             let config_key = config_account.clone().key();
             let bump = config_account.vault_bump[0];
 
-            msg!("reearn_program:claim_ste_reward_ins:{}:{}", collateral.deposit_reserve, total_claim_reward);
+            msg!("reearn_program:claim_ste_reward_ins:{}:{}:{}", supply_apy.reward_token, collateral.deposit_reserve, total_claim_reward);
             let signer: &[&[&[u8]]] = &[&[VAULT_SEED, config_key.as_ref(), &[bump]]];
             let cpi_ctx = CpiContext::new_with_signer(
                 token_program.to_account_info(),
