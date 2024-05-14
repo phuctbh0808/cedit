@@ -991,6 +991,7 @@ program
             .instruction(),
         ];
         console.log("Create create instruction success");
+        console.log("ERROR ", error);
         console.log("ERROR CODE ", error.code);
 
         if (error.code === 'ERR_OUT_OF_RANGE') {
