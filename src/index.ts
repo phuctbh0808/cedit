@@ -1021,6 +1021,77 @@ program
   });
 
 program
+  .command("close-supply-gauge")
+  .option("--program_id <string>", "Pubkey")
+  .option("--source <string>", "wallet keypair")
+  .option("--network_url <string>", "")
+  .option("--admin_key <string>", "Pubkey")
+  .option("--reserve <string>", "Pubkey")
+  .description("Close gauge for supply reserve")
+  .action(async (params) => {
+    let { program_id, source, network_url, admin_key, reserve  } =
+      params;
+
+    console.log("Enable supply gauge");
+    console.log("params:", params);
+
+    if (
+      !PublicKey.isOnCurve(new PublicKey(reserve).toBase58()) ||
+      !PublicKey.isOnCurve(reserve)
+    ) {
+      console.error("Invalid pubkey address for reserve");
+      return;
+    }
+
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+    let sourceOwner = keypair.publicKey;
+    let configAccount: PublicKey;
+    let supplyApyAccount: PublicKey;
+    let bump: number;
+    let supplyApyBump: number;
+    const CONFIG_SEED = "supernova";
+    const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
+    const reserveKey = new PublicKey(reserve);
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(CONFIG_SEED), new PublicKey(admin_key).toBuffer()],
+      programId,
+    );
+
+    [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(SUPPLY_REWARD_SEED), reserveKey.toBuffer()],
+      programId,
+    );
+    const instructions = [
+        await program.methods
+        .closeReserveReward(reserveKey)
+        .accounts({
+          feePayer: sourceOwner,  
+          authority: sourceOwner,
+          supplyApy: supplyApyAccount,
+          configAccount,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction(),
+    ];
+
+    const tx = new Transaction().add(...instructions);
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+    tx.feePayer = sourceOwner;
+    const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+    recoverTx.sign(keypair);
+
+    const txHash = await connection.sendRawTransaction(recoverTx.serialize());
+
+    console.log("Close reserve account success at tx", txHash);
+  });
+
+program
   .command("fetch-reearn-config")
   .option("--program_id <string>", "")
   .option("--source <string>", "")
