@@ -15,7 +15,7 @@ mod relend {
 pub use relend_program::ID as RELEND_PROGRAM;
 mod relend_program {
     use super::*;
-    declare_id!("AqR1WSUwNeVsz66ayH2J8iTyiGMgouRwPqzzMaxx49ba");
+    declare_id!("BtdHuy25QeiQg8TkgFyHkFXJbezhNE1tyAC7sAMjzh24");
 }
 
 pub use relend_program_test::ID as RELEND_PROGRAM_TEST;

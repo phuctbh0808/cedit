@@ -38,6 +38,7 @@ const opts: anchor.web3.ConfirmOptions = {
 const BTE_CONFIG_SEED = "supernova";
 const BTE_OBLIGATION_REWARD_SEED = "tothemoon";
 const BTE_VAULT_SEED = "onepiece";
+const RESERVE_SEED = "bersek3r";
 
 async function getRENECBalance(walletPublicKey: PublicKey, connection: Connection) {
   try {
@@ -740,6 +741,7 @@ program
       [Buffer.from(BTE_CONFIG_SEED), owner.toBuffer()],
       programId,
     );
+    await delay(5000);
     const configAccountInfo = await program.account.config.fetch(configAccount);
     console.log(configAccountInfo);
   });
@@ -1076,6 +1078,82 @@ program
 
     console.log("Close reserve account success at tx", txHash);
   });
+  program
+  .command("supply-to-earn")
+  .option("--program_id <string>", "")
+  .option("--source <string>", "")
+  .option("--network_url <string>", "")
+  .option("--reserve <string>", "Pubkey")
+  .option("--obligation <string>", "Pubkey")
+  .description("Supply token to earn")
+  .action(async (params) => {
+    let { program_id, source, network_url, reserve, obligation } = params;
+
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+    let sourceOwner = keypair.publicKey;
+    let configAccount: PublicKey;
+    let supplyApyAccount: PublicKey;
+    let bump: number;
+    let supplyApyBump: number;
+    const VAULT_SEED = "onepiece";
+    const CONFIG_SEED = "supernova";
+    const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
+    const reserveKey = new PublicKey(reserve);
+    const obligationKey = new PublicKey(obligation);
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(CONFIG_SEED), keypair.publicKey.toBuffer()],
+      programId,
+    );
+
+    [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(SUPPLY_REWARD_SEED), reserveKey.toBuffer()],
+      programId,
+    );
+     const [reserveAccount, reserveBump] = anchor.web3.PublicKey.findProgramAddressSync(
+        [Buffer.from(RESERVE_SEED), reserveKey.toBuffer(), obligationKey.toBuffer()],
+        programId,
+      );
+
+        const instructions = [
+          await program.methods
+            .supplyToEarn(keypair.publicKey)
+            .accounts({
+              authority: keypair.publicKey,
+              reserveReward: reserveAccount,
+              supplyApy: supplyApyAccount,
+              configAccount,
+              obligation: obligationKey,
+              reserve: reserveKey,
+              systemProgram: SystemProgram.programId,
+            })
+            .instruction(),
+        ];
+
+        const tx = new Transaction().add(...instructions);
+        tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+        tx.feePayer = sourceOwner;
+        const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+        recoverTx.sign(keypair);
+
+        try {
+          const txHash = await connection.sendRawTransaction(recoverTx.serialize());
+          console.log("Supply to earn success", txHash);
+        } catch (error) {
+          console.error(error);
+          throw error;
+        }
+
+    await delay(5000);
+
+    const reserveRewardAccount = await program.account.reserveReward.fetch(reserveAccount);  
+    console.log("Reserve reward account", reserveRewardAccount);
+  })
 
 program
   .command("fetch-reearn-config")
