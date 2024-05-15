@@ -974,10 +974,8 @@ program
 
         await connection.sendRawTransaction(recoverTx.serialize());
       })
-      .catch(async (error) => {
-        console.log("Supply apy account not found or serialized error, creating new one");
-        console.log("Information");
-        console.log({reward, apy, reward_decimals, start_time, end_time, supplyApyAccount, configAccount, sourceOwner });
+      .catch(async () => {
+        console.log("Supply apy account not found, creating new one");
         const instructions = [
           await program.methods
             .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
@@ -991,27 +989,6 @@ program
             .instruction(),
         ];
         console.log("Create create instruction success");
-        console.log("ERROR ", error);
-        console.log("ERROR CODE ", error.code);
-
-        if (error.code === 'ERR_OUT_OF_RANGE') {
-          console.log("Close old account");
-          // If deseriallize error => Old account => Close before initializing => Add close_instruction before initializing
-          instructions.unshift(
-            await program.methods
-            .closeReserveReward(reserveKey)
-            .accounts({
-              feePayer: sourceOwner,  
-              authority: sourceOwner,
-              supplyApy: supplyApyAccount,
-              configAccount,
-              systemProgram: SystemProgram.programId,
-            })
-            .instruction(),
-          )
-        }
-
-        console.log("Instruction length ", instructions.length);
 
         const tx = new Transaction().add(...instructions);
         tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
@@ -1034,6 +1011,77 @@ program
     await delay(5000);
     const supplyApyData = await program.account.supplyApy.fetch(supplyApyAccount);
     console.log("Supply apy data: ", supplyApyData);
+  });
+
+program
+  .command("close-supply-gauge")
+  .option("--program_id <string>", "Pubkey")
+  .option("--source <string>", "wallet keypair")
+  .option("--network_url <string>", "")
+  .option("--admin_key <string>", "Pubkey")
+  .option("--reserve <string>", "Pubkey")
+  .description("Close gauge for supply reserve")
+  .action(async (params) => {
+    let { program_id, source, network_url, admin_key, reserve  } =
+      params;
+
+    console.log("Enable supply gauge");
+    console.log("params:", params);
+
+    if (
+      !PublicKey.isOnCurve(new PublicKey(reserve).toBase58()) ||
+      !PublicKey.isOnCurve(reserve)
+    ) {
+      console.error("Invalid pubkey address for reserve");
+      return;
+    }
+
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+    let sourceOwner = keypair.publicKey;
+    let configAccount: PublicKey;
+    let supplyApyAccount: PublicKey;
+    let bump: number;
+    let supplyApyBump: number;
+    const CONFIG_SEED = "supernova";
+    const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
+    const reserveKey = new PublicKey(reserve);
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(CONFIG_SEED), new PublicKey(admin_key).toBuffer()],
+      programId,
+    );
+
+    [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(SUPPLY_REWARD_SEED), reserveKey.toBuffer()],
+      programId,
+    );
+    const instructions = [
+        await program.methods
+        .closeReserveReward(reserveKey)
+        .accounts({
+          feePayer: sourceOwner,  
+          authority: sourceOwner,
+          supplyApy: supplyApyAccount,
+          configAccount,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction(),
+    ];
+
+    const tx = new Transaction().add(...instructions);
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+    tx.feePayer = sourceOwner;
+    const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+    recoverTx.sign(keypair);
+
+    const txHash = await connection.sendRawTransaction(recoverTx.serialize());
+
+    console.log("Close reserve account success at tx", txHash);
   });
 
 program
