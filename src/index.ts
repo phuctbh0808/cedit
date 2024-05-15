@@ -265,6 +265,7 @@ program
     let reNGN = new PublicKey("BfSYryW6Q93iUKE4uNsUtAdxQT9uU4GSVg2si3outLk1");
     let GAST = new PublicKey("GvTwnAQLTdM6fMZbuGQoVj5odefCC2FsDvaMgxqZV1fi");
     let PLUS1 = new PublicKey("AhDXc3sRW1xKPXwDwAmGb4JonRTka5rdSjg43owF53gg");
+    let APS = new PublicKey("BQEZ2K6Gj662kdKtaH4RhpuZDrPpxKm5ANFc9e27k2YU");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
       reBTC = new PublicKey("GwPQTMg3eMVpDTEE3daZDtGsBtNHBK3X47dbBJvXUzF4");
@@ -279,6 +280,7 @@ program
     const caseNGN = "rengnmainnet";
     const caseGAST = "gastmainnet";
     const casePLUS1 = "plus1mainnet";
+    const caseAPS = "apsmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
     const caseETH_test = "reethtestnet";
@@ -287,6 +289,7 @@ program
     const caseNGN_test = "rengntestnet";
     const caseGAST_test = "gasttestnet";
     const casePLUS1_test = "plus1testnet";
+    const caseAPS_test = "apstestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
     let oracleProduct = "";
@@ -324,6 +327,10 @@ program
         oracleProduct = "6sC5hhhhiVRuLZRAhWjHWdV4QHquSj6JpEZxZejqPz7Q";
         oraclePrice = "DyvCq8sSXJkbTaU2oXEB7PNwVaCuNbkz3CvmnKsigWHB";
         break;
+      case caseAPS:
+        oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
+        oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
+        break;
       case caseNGN_test:
         oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
         oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
@@ -356,6 +363,10 @@ program
         oracleProduct = "6sC5hhhhiVRuLZRAhWjHWdV4QHquSj6JpEZxZejqPz7Q";
         oraclePrice = "DyvCq8sSXJkbTaU2oXEB7PNwVaCuNbkz3CvmnKsigWHB";
         break;
+      case caseAPS_test:
+        oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
+        oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
+        break;
     }
 
     console.log("Add new reserve");
@@ -385,6 +396,9 @@ program
         break;
       case "PLUS1":
         tokenProgramId = PLUS1;
+        break;
+      case "APS":
+        tokenProgramId = APS;
         break;
     }
 
@@ -906,7 +920,7 @@ program
 
     if (
       !PublicKey.isOnCurve(new PublicKey(reserve).toBase58()) ||
-      !PublicKey.isOnCurve(reserve) || 
+      !PublicKey.isOnCurve(reserve) ||
       !PublicKey.isOnCurve(reward) ||
       !PublicKey.isOnCurve(new PublicKey(reward).toBase58())
     ) {
