@@ -32,7 +32,7 @@ impl SupplyApy {
     pub const LEN: usize = 8 + 32 + 4 + 32 + 1 + 8 * 2 + 1 + 16 * 6;
 
     pub fn calculate_reward(&self, supply_amount: u64, supply_decimals: u32, current_time: i64, last_supply: i64) -> Result<u64, ProgramError> {
-        let duration = self.calculate_duration(current_time, last_supply);
+        let duration = self.get_rewardable_duration(current_time, last_supply);
         let supply_amount = Decimal::from(supply_amount)
         .try_div(10u64.pow(supply_decimals))?;
         let apy_percentage = (self.apy * 100.0) as u64;
@@ -46,23 +46,27 @@ impl SupplyApy {
         Ok(earnings)
     }
 
-    fn calculate_duration(&self, current_time: i64, last_supply: i64) -> i64 {
-        if current_time < self.start_time {
-            // No reward before start_time
-            0
-        } else if current_time <= self.end_time {
+    fn get_rewardable_duration(&self, current_time: i64, last_supply: i64) -> i64 {
+        let mut duration = 0;
+        // current_time < start_time => Reward will be zero, so we skip this condition
+
+        if current_time >= self.start_time && current_time <= self.end_time {
             // last_supply >= start_time => Reward is accumulated from last_supply to current_time
             // last_supply < start_time => Reward is accumulated from start_time to current_time
-            current_time - last_supply.max(self.start_time)
-        } else { // current_time > self.end_time
+            duration = current_time - last_supply.max(self.start_time);
+        }
+
+        if current_time > self.end_time {
             if last_supply < self.start_time {
                 // last_supply < start_time => Reward is accumulated from start_time to end_time
-                self.end_time - self.start_time
+                duration = self.end_time - self.start_time;
             } else {
                 // last_supply > end_time => Reward is accumulated from min(last_supply, end_time) to end_time
-                self.end_time - last_supply.min(self.end_time)
+                duration = self.end_time - last_supply.min(self.end_time);
             }
+
         }
+        duration
     }
 }
 
