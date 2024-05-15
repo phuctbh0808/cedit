@@ -897,8 +897,8 @@ program
   .option("--reward <string>", "Pubkey")
   .option("--reward_decimals <number>", "")
   .option("--apy <number>", "ration decimal number")
-  .option("--start_time <number>", "Start time reward")
-  .option("--end_time <number>", "End time reward")
+  .option("--start_time <string>", "Start time reward, UTC time: dd/MM/yyyy hh:mm")
+  .option("--end_time <string>", "End time reward, UTC time: dd/MM/yyyy hh:mm")
   .description("Enable gauge for supply reserve")
   .action(async (params) => {
     let { program_id, source, network_url, admin_key, reserve, reward, reward_decimals, apy, start_time, end_time } =
@@ -917,6 +917,8 @@ program
       return;
     }
 
+    const startTimeUnix = convertDateStringToUnixTimeSecond(start_time);
+    const endTimeUnix = convertDateStringToUnixTimeSecond(end_time);
     const connection = new Connection(network_url, opts);
     const sourceKey = JSON.parse(fs.readFileSync(source));
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
@@ -950,7 +952,7 @@ program
         console.log("Supply apy account found, updating it");
         const instructions = [
           await program.methods
-            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
+            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, new BN(startTimeUnix), new BN(endTimeUnix))
             .accounts({
               authority: sourceOwner,
               supplyApy: supplyApyAccount,
@@ -971,7 +973,7 @@ program
         console.log("Supply apy account not found, creating new one");
         const instructions = [
           await program.methods
-            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
+            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, new BN(startTimeUnix), new BN(endTimeUnix))
             .accounts({
               feePayer: sourceOwner,
               authority: sourceOwner,
@@ -1016,7 +1018,7 @@ program
     let { program_id, source, network_url, admin_key, reserve  } =
       params;
 
-    console.log("Enable supply gauge");
+    console.log("Close supply gauge");
     console.log("params:", params);
 
     if (
@@ -1104,3 +1106,19 @@ program
   });
 
 program.parse();
+
+function convertDateStringToUnixTimeSecond(dateString: string) {
+  // date string format: DD/mm/YYYY hh:mm, for example: 01/01/2022 00:00, time will be in UTC
+  const [datePart, timePart] = dateString.split(' ');
+  const [day, month, year] = datePart.split('/');
+  const [hours, minutes] = timePart.split(':');
+  const formattedDate = `${month}/${day}/${year} ${hours}:${minutes} UTC`;
+  const dateObject = new Date(formattedDate);
+
+  if (isNaN(dateObject.getTime())) {
+      throw new Error('Invalid date');
+  }
+  console.log("Date object ", dateObject);
+  const unixTimestamp = Math.floor(dateObject.getTime() / 1000);
+  return unixTimestamp;
+}
