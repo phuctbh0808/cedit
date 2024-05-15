@@ -340,11 +340,11 @@ export type ReearnProgram = {
         },
         {
           "name": "startTime",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "endTime",
-          "type": "u64"
+          "type": "i64"
         }
       ]
     },
@@ -536,11 +536,11 @@ export type ReearnProgram = {
         },
         {
           "name": "startTime",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "endTime",
-          "type": "u64"
+          "type": "i64"
         }
       ]
     }
@@ -679,11 +679,11 @@ export type ReearnProgram = {
           },
           {
             "name": "startTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "endTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "initialized",
@@ -1092,11 +1092,11 @@ export const IDL: ReearnProgram = {
         },
         {
           "name": "startTime",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "endTime",
-          "type": "u64"
+          "type": "i64"
         }
       ]
     },
@@ -1288,11 +1288,11 @@ export const IDL: ReearnProgram = {
         },
         {
           "name": "startTime",
-          "type": "u64"
+          "type": "i64"
         },
         {
           "name": "endTime",
-          "type": "u64"
+          "type": "i64"
         }
       ]
     }
@@ -1431,11 +1431,11 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "startTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "endTime",
-            "type": "u64"
+            "type": "i64"
           },
           {
             "name": "initialized",
