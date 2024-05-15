@@ -967,8 +967,8 @@ program
 
         await connection.sendRawTransaction(recoverTx.serialize());
       })
-      .catch(async (error) => {
-        console.log("Supply apy account not found or serialized error, creating new one");
+      .catch(async () => {
+        console.log("Supply apy account not found, creating new one");
         const instructions = [
           await program.methods
             .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, new BN(start_time), new BN(end_time))
@@ -981,22 +981,6 @@ program
             })
             .instruction(),
         ];
-
-        if (error.code === 'ERR_OUT_OF_RANGE') {
-          // If deseriallize error => Old account => Close before initializing => Add close_instruction before initializing
-          instructions.unshift(
-            await program.methods
-            .closeReserveReward(reserveKey)
-            .accounts({
-              feePayer: sourceOwner,  
-              authority: sourceOwner,
-              supplyApy: supplyApyAccount,
-              configAccount,
-              systemProgram: SystemProgram.programId,
-            })
-            .instruction(),
-          )
-        }
 
         const tx = new Transaction().add(...instructions);
         tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
