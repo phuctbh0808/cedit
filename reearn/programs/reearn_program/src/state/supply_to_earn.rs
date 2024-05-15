@@ -71,7 +71,7 @@ impl SupplyApy {
 }
 
 #[test]
-pub fn test_calculate_reward() {
+pub fn test_get_rewardable_duration_before_start_time() {
     let supply_apy = SupplyApy {
         reserve: Default::default(),
         apy: 3.4,
@@ -86,12 +86,51 @@ pub fn test_calculate_reward() {
     let supply_amount = 100000;
     let before_start_time_earning = supply_apy.calculate_reward(supply_amount, 6, 900, 0).unwrap();
     assert_eq!(before_start_time_earning, 0);
-    let inside_earning = supply_apy.calculate_reward(supply_amount, 6, 1500, 0).unwrap();
-    assert_eq!(inside_earning, 5);
+}
+
+#[test]
+pub fn test_get_rewardable_duration_after_start_time_and_before_end_time() {
+    let supply_apy = SupplyApy {
+        reserve: Default::default(),
+        apy: 3.4,
+        reward_token: Default::default(),
+        token_decimals: 6,
+        start_time: 1000,
+        end_time: 2000,
+        initialized: true,
+        _reserve_space: [0, 0, 0, 0, 0, 0],
+    };
+
+    let supply_amount = 100000;
+    // last_supply < start_time
+    let inside_earning_1 = supply_apy.calculate_reward(supply_amount, 6, 1500, 0).unwrap();
+    assert_eq!(inside_earning_1, 5);
+    // last_supply >= start_time
+    let inside_earning_2 = supply_apy.calculate_reward(supply_amount, 6, 1900, 1400).unwrap();
+    assert_eq!(inside_earning_2, 5);
+}
+
+#[test]
+pub fn test_get_rewardable_duration_after_end_time() {
+    let supply_apy = SupplyApy {
+        reserve: Default::default(),
+        apy: 3.4,
+        reward_token: Default::default(),
+        token_decimals: 6,
+        start_time: 1000,
+        end_time: 2000,
+        initialized: true,
+        _reserve_space: [0, 0, 0, 0, 0, 0],
+    };
+
+    let supply_amount = 100000;
+    // start_time < last_supply < end_time
     let outside_earning_1 = supply_apy.calculate_reward(supply_amount, 6, 2500, 1500).unwrap();
     assert_eq!(outside_earning_1, 5);
+    // last_supply > end_time
     let outside_earning_2 = supply_apy.calculate_reward(supply_amount, 6, 2500, 2001).unwrap();
     assert_eq!(outside_earning_2, 0);
+    // last_supply < start_time
     let outside_earning_3 = supply_apy.calculate_reward(supply_amount, 6, 2500, 500).unwrap();
     assert_eq!(outside_earning_3, 10);
 }
