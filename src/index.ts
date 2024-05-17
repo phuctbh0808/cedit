@@ -266,6 +266,7 @@ program
     let GAST = new PublicKey("GvTwnAQLTdM6fMZbuGQoVj5odefCC2FsDvaMgxqZV1fi");
     let PLUS1 = new PublicKey("AhDXc3sRW1xKPXwDwAmGb4JonRTka5rdSjg43owF53gg");
     let APS = new PublicKey("BQEZ2K6Gj662kdKtaH4RhpuZDrPpxKm5ANFc9e27k2YU");
+    let SOL = new PublicKey("3r7AzTijvTDoLGgMqcNXTJimwg8XyxUG6EaVqHXF8EWC");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
       reBTC = new PublicKey("GwPQTMg3eMVpDTEE3daZDtGsBtNHBK3X47dbBJvXUzF4");
@@ -281,6 +282,7 @@ program
     const caseGAST = "gastmainnet";
     const casePLUS1 = "plus1mainnet";
     const caseAPS = "apsmainnet";
+    const caseSOL = "solmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
     const caseETH_test = "reethtestnet";
@@ -290,6 +292,7 @@ program
     const caseGAST_test = "gasttestnet";
     const casePLUS1_test = "plus1testnet";
     const caseAPS_test = "apstestnet";
+    const caseSOL_test = "soltestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
     let oracleProduct = "";
@@ -331,6 +334,10 @@ program
         oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
         oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
         break;
+      case caseSOL:
+        oracleProduct = "7Mf32AtCbCwny2bXqU2heFjoq2RjiLChnzBPGWbuGnLV";
+        oraclePrice = "32uDe1yQ26xG1acoscYU15Gdpio6toEa2HumJ4Ehsrv1";
+        break;
       case caseNGN_test:
         oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
         oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
@@ -367,6 +374,10 @@ program
         oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
         oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
         break;
+      case caseSOL_test:
+        oracleProduct = "7Mf32AtCbCwny2bXqU2heFjoq2RjiLChnzBPGWbuGnLV";
+        oraclePrice = "32uDe1yQ26xG1acoscYU15Gdpio6toEa2HumJ4Ehsrv1";
+        break;
     }
 
     console.log("Add new reserve");
@@ -399,6 +410,9 @@ program
         break;
       case "APS":
         tokenProgramId = APS;
+        break;
+      case "SOL":
+        tokenProgramId = SOL;
         break;
     }
 
