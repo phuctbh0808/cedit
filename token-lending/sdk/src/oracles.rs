@@ -91,6 +91,39 @@ pub fn get_oracle_price(
     Ok((market_price?, ema_price))
 }
 
+pub fn unpack_oracle_price_info(
+    price_info: &AccountInfo,
+) -> Result<u64, ProgramError> {
+    // Default price will be 1 which apply for all stable coin
+    let mut price = 1;
+    let price_key = price_info.key.to_string();
+    if price_key != relend_program::REUSD {
+        msg!("It is not reUSD");
+
+        if *price_info.key == relend_program::NULL_PUBKEY {
+            return Err(LendingError::NullOracleConfig.into());
+        }
+
+        let price_data: &[u8] = &price_info.try_borrow_data()?;
+        let mut oracle_price_data: &[u8] = &price_data[8..];
+
+        let oracle_price_info: Price = BorshDeserialize::deserialize(&mut oracle_price_data)
+            .map_err(|error| {
+                msg!("Price deserialize error: {:?}", error);
+                error
+            })?;
+
+        require!(
+            oracle_price_info.status == PriceStatus::Online,
+            LendingError::UnavailablePriceInfo
+        );
+        price = oracle_price_info.price;
+    }
+
+    Ok(price)
+}
+
+
 fn to_timestamp_u64(t: i64) -> Result<u64, LendingError> {
     u64::try_from(t).or(Err(LendingError::InvalidTimestampConversion))
 }

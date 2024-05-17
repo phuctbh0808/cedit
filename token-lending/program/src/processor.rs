@@ -34,6 +34,7 @@ use solana_program::{
 };
 use spl_token::state::Mint;
 use std::{cmp::min, result::Result};
+use relend_sdk::oracles::unpack_oracle_price_info;
 
 /// relend market owner
 pub mod relend_market_owner {
@@ -537,8 +538,7 @@ fn _refresh_reserve<'a>(
     }
 
     let (market_price, smoothed_market_price) = get_price(price_info, product_info, clock)?;
-    msg!("Market price: {}", market_price);
-    msg!("Smoothed market price: {:?}", smoothed_market_price);
+    msg!("relend_program::_refresh_reserve_ins:market_price:{}:{:?}", market_price, smoothed_market_price);
     reserve.liquidity.market_price = market_price;
 
     if let Some(smoothed_market_price) = smoothed_market_price {
@@ -1259,7 +1259,7 @@ fn process_deposit_reserve_liquidity_and_obligation_collateral(
     let destination_collateral_info = next_account_info(account_info_iter)?;
     let obligation_info = next_account_info(account_info_iter)?;
     let obligation_owner_info = next_account_info(account_info_iter)?;
-    let _oracle_price_info = next_account_info(account_info_iter)?;
+    let oracle_price_info = next_account_info(account_info_iter)?;
     let _second_oracle_feed_info = next_account_info(account_info_iter)?;
     let user_transfer_authority_info = next_account_info(account_info_iter)?;
     let clock = &Clock::get()?;
@@ -1267,6 +1267,10 @@ fn process_deposit_reserve_liquidity_and_obligation_collateral(
         next_account_info(account_info_iter)?;
     }
     let token_program_id = next_account_info(account_info_iter)?;
+
+    msg!("Oracle price pubkey {}", oracle_price_info.key);
+    let price = unpack_price_info(oracle_price_info);
+    msg!("relend_program::deposit_reserve_liquidity_and_obligation_collateral_ins:input_oracle_price:{}", price);
 
     _refresh_reserve_interest(program_id, reserve_info, clock)?;
     let collateral_amount = _deposit_reserve_liquidity(
@@ -1297,6 +1301,7 @@ fn process_deposit_reserve_liquidity_and_obligation_collateral(
         clock,
         token_program_id,
     )?;
+
     // mark the reserve as stale to make sure no weird bugs happen
     let mut reserve = Reserve::unpack(&reserve_info.data.borrow())?;
     reserve.last_update.mark_stale();
@@ -3002,6 +3007,18 @@ fn get_price(
     match get_oracle_price(price_account_info, product_account_info, clock) {
         Ok((market_price, ema_price)) => Ok((market_price, Some(ema_price))),
         Err(error) => Err(error.into()),
+    }
+}
+
+fn unpack_price_info(
+    price_account_info: &AccountInfo,
+) -> u64 {
+    match unpack_oracle_price_info(price_account_info) {
+        Ok(price) => price,
+        Err(error) => {
+            msg!("Failed to unpack price oracle {:?}", error);
+            0
+        },
     }
 }
 
