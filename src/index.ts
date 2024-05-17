@@ -266,6 +266,7 @@ program
     let GAST = new PublicKey("GvTwnAQLTdM6fMZbuGQoVj5odefCC2FsDvaMgxqZV1fi");
     let PLUS1 = new PublicKey("AhDXc3sRW1xKPXwDwAmGb4JonRTka5rdSjg43owF53gg");
     let APS = new PublicKey("BQEZ2K6Gj662kdKtaH4RhpuZDrPpxKm5ANFc9e27k2YU");
+    let BNB = new PublicKey("7G8x2UZSgVDZzbPSUKGjg2e2YAkMV8zwiP1525yxEK47");
     let SOL = new PublicKey("3r7AzTijvTDoLGgMqcNXTJimwg8XyxUG6EaVqHXF8EWC");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
@@ -282,6 +283,7 @@ program
     const caseGAST = "gastmainnet";
     const casePLUS1 = "plus1mainnet";
     const caseAPS = "apsmainnet";
+    const caseBNB = "bnbmainnet";
     const caseSOL = "solmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
@@ -292,6 +294,7 @@ program
     const caseGAST_test = "gasttestnet";
     const casePLUS1_test = "plus1testnet";
     const caseAPS_test = "apstestnet";
+    const caseBNB_test = "bnbtestnet";
     const caseSOL_test = "soltestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
@@ -334,6 +337,10 @@ program
         oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
         oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
         break;
+      case caseBNB:
+        oracleProduct = "EdNEs5aVomEduCQpVFgXQjLMpb34tazX5UuSZgW6kuYB";
+        oraclePrice = "8KFnEVkcAtvzb7Z5YVRmPBqPrq2syKJM4EoW4xnjw4Qu";
+        break;
       case caseSOL:
         oracleProduct = "7Mf32AtCbCwny2bXqU2heFjoq2RjiLChnzBPGWbuGnLV";
         oraclePrice = "32uDe1yQ26xG1acoscYU15Gdpio6toEa2HumJ4Ehsrv1";
@@ -374,6 +381,10 @@ program
         oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
         oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
         break;
+      case caseBNB_test:
+        oracleProduct = "EdNEs5aVomEduCQpVFgXQjLMpb34tazX5UuSZgW6kuYB";
+        oraclePrice = "8KFnEVkcAtvzb7Z5YVRmPBqPrq2syKJM4EoW4xnjw4Qu";
+        break;
       case caseSOL_test:
         oracleProduct = "7Mf32AtCbCwny2bXqU2heFjoq2RjiLChnzBPGWbuGnLV";
         oraclePrice = "32uDe1yQ26xG1acoscYU15Gdpio6toEa2HumJ4Ehsrv1";
@@ -410,6 +421,9 @@ program
         break;
       case "APS":
         tokenProgramId = APS;
+        break;
+      case "BNB":
+        tokenProgramId = BNB;
         break;
       case "SOL":
         tokenProgramId = SOL;
