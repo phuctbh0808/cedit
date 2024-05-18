@@ -27,4 +27,12 @@ pub enum ReearnErrorCode {
     WrongRewardToken,
     #[msg("Invalid account owner")]
     InvalidAccountOwner,
+    #[msg("The start time must be earlier than end time")]
+    StartTimeAfterEndTime,
+    #[msg("The start time must be earlier than current time")]
+    StartTimeBeforeCurrent,
+    #[msg("The start time has already passed and cannot be changed")]
+    StartTimeImmutable,
+    #[msg("The end time must be after the current time")]
+    EndTimeAfterCurrent,
 }

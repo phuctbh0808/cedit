@@ -27,6 +27,7 @@ import { BN } from "bn.js";
 import { RelendAction, RelendMarket } from "relend-adapter";
 import BigNumber from "bignumber.js";
 import { IDL } from "./reearn_program";
+import { delay } from "@renec-foundation/oracle-sdk";
 
 const program = new Command();
 
@@ -938,9 +939,11 @@ program
   .option("--reward <string>", "Pubkey")
   .option("--reward_decimals <number>", "")
   .option("--apy <number>", "ration decimal number")
+  .option("--start_time <string>", "Start time reward, UTC time: dd/MM/yyyy hh:mm")
+  .option("--end_time <string>", "End time reward, UTC time: dd/MM/yyyy hh:mm")
   .description("Enable gauge for supply reserve")
   .action(async (params) => {
-    let { program_id, source, network_url, admin_key, reserve, reward, reward_decimals, apy } =
+    let { program_id, source, network_url, admin_key, reserve, reward, reward_decimals, apy, start_time, end_time } =
       params;
 
     console.log("Enable supply gauge");
@@ -956,6 +959,8 @@ program
       return;
     }
 
+    const startTimeUnix = convertDateStringToUnixTimeSecond(start_time);
+    const endTimeUnix = convertDateStringToUnixTimeSecond(end_time);
     const connection = new Connection(network_url, opts);
     const sourceKey = JSON.parse(fs.readFileSync(source));
     const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
@@ -989,7 +994,7 @@ program
         console.log("Supply apy account found, updating it");
         const instructions = [
           await program.methods
-            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals)
+            .changeSupplyApy(new PublicKey(reward), apy, reward_decimals, new BN(startTimeUnix), new BN(endTimeUnix))
             .accounts({
               authority: sourceOwner,
               supplyApy: supplyApyAccount,
@@ -1010,7 +1015,7 @@ program
         console.log("Supply apy account not found, creating new one");
         const instructions = [
           await program.methods
-            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals)
+            .initReserveReward(reserveKey, new PublicKey(reward), apy, reward_decimals, new BN(startTimeUnix), new BN(endTimeUnix))
             .accounts({
               feePayer: sourceOwner,
               authority: sourceOwner,
@@ -1037,6 +1042,81 @@ program
       programId,
     );
     console.log(vaultAccount.toBase58());
+
+    await delay(5000);
+    const supplyApyData = await program.account.supplyApy.fetch(supplyApyAccount);
+    console.log("Supply apy data: ", supplyApyData);
+  });
+
+program
+  .command("close-supply-gauge")
+  .option("--program_id <string>", "Pubkey")
+  .option("--source <string>", "wallet keypair")
+  .option("--network_url <string>", "")
+  .option("--admin_key <string>", "Pubkey")
+  .option("--reserve <string>", "Pubkey")
+  .description("Close gauge for supply reserve")
+  .action(async (params) => {
+    let { program_id, source, network_url, admin_key, reserve  } =
+      params;
+
+    console.log("Close supply gauge");
+    console.log("params:", params);
+
+    if (
+      !PublicKey.isOnCurve(new PublicKey(reserve).toBase58()) ||
+      !PublicKey.isOnCurve(reserve)
+    ) {
+      console.error("Invalid pubkey address for reserve");
+      return;
+    }
+
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+    let sourceOwner = keypair.publicKey;
+    let configAccount: PublicKey;
+    let supplyApyAccount: PublicKey;
+    let bump: number;
+    let supplyApyBump: number;
+    const CONFIG_SEED = "supernova";
+    const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
+    const reserveKey = new PublicKey(reserve);
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(CONFIG_SEED), new PublicKey(admin_key).toBuffer()],
+      programId,
+    );
+
+    [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(SUPPLY_REWARD_SEED), reserveKey.toBuffer()],
+      programId,
+    );
+    const instructions = [
+        await program.methods
+        .closeReserveReward(reserveKey)
+        .accounts({
+          feePayer: sourceOwner,  
+          authority: sourceOwner,
+          supplyApy: supplyApyAccount,
+          configAccount,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction(),
+    ];
+
+    const tx = new Transaction().add(...instructions);
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+    tx.feePayer = sourceOwner;
+    const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+    recoverTx.sign(keypair);
+
+    const txHash = await connection.sendRawTransaction(recoverTx.serialize());
+
+    console.log("Close reserve account success at tx", txHash);
   });
 
 program
@@ -1068,3 +1148,19 @@ program
   });
 
 program.parse();
+
+function convertDateStringToUnixTimeSecond(dateString: string) {
+  // date string format: DD/mm/YYYY hh:mm, for example: 01/01/2022 00:00, time will be in UTC
+  const [datePart, timePart] = dateString.split(' ');
+  const [day, month, year] = datePart.split('/');
+  const [hours, minutes] = timePart.split(':');
+  const formattedDate = `${month}/${day}/${year} ${hours}:${minutes} UTC`;
+  const dateObject = new Date(formattedDate);
+
+  if (isNaN(dateObject.getTime())) {
+      throw new Error('Invalid date');
+  }
+  console.log("Date object ", dateObject);
+  const unixTimestamp = Math.floor(dateObject.getTime() / 1000);
+  return unixTimestamp;
+}

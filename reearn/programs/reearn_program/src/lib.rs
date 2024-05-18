@@ -64,8 +64,17 @@ pub mod reearn_program {
         reward: Pubkey,
         apy: f32,
         token_decimals: u8,
+        start_time: i64,
+        end_time: i64,
     ) -> ProgramResult {
-        init_reserve_reward::exec(ctx, reserve, reward, apy, token_decimals)
+        init_reserve_reward::exec(ctx, reserve, reward, apy, token_decimals, start_time, end_time)
+    }
+
+    pub fn close_reserve_reward(
+        ctx: Context<CloseReserveReward>,
+        reserve: Pubkey,
+    ) -> ProgramResult {
+        close_reserve_reward::exec(ctx, reserve)
     }
 
     pub fn supply_to_earn(
@@ -87,7 +96,9 @@ pub mod reearn_program {
         reward: Pubkey,
         apy: f32,
         token_decimals: u8,
+        start_time: i64,
+        end_time: i64,
     ) -> ProgramResult {
-        change_supply_apy::exec(ctx, reward, apy, token_decimals)
+        change_supply_apy::exec(ctx, reward, apy, token_decimals, start_time, end_time)
     }
 }

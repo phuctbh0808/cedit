@@ -28,15 +28,26 @@ pub struct InitReserveReward<'info> {
     pub system_program: Program<'info, System>,
 }
 
-pub fn exec(ctx: Context<InitReserveReward>, reserve: Pubkey, reward: Pubkey, apy: f32, token_decimals: u8) -> ProgramResult {
+pub fn exec(ctx: Context<InitReserveReward>, reserve: Pubkey, reward: Pubkey, apy: f32, token_decimals: u8, start_time: i64, end_time: i64) -> ProgramResult {
     let supply_apy = &mut ctx.accounts.supply_apy;
     msg!("Supply APY account address is: {:?}", supply_apy.key());
+
+    let current_time = Clock::get()?.unix_timestamp as i64;
+    if start_time >= end_time  {
+        return Err(ReearnErrorCode::StartTimeAfterEndTime.into());
+    }
+
+    if start_time < current_time {
+        return Err(ReearnErrorCode::StartTimeBeforeCurrent.into());
+    }
     if !supply_apy.initialized {
         supply_apy.initialized = true;
         supply_apy.reserve = reserve;
         supply_apy.reward_token = reward;
         supply_apy.token_decimals = token_decimals;
         supply_apy.apy = apy;
+        supply_apy.start_time = start_time;
+        supply_apy.end_time = end_time;
     }
 
     msg!("Supply APY account is initialized: {:?}", supply_apy);
