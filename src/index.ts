@@ -1048,8 +1048,6 @@ program
     await delay(5000);
     const supplyApyData = await program.account.supplyApy.fetch(supplyApyAccount);
     console.log("Supply apy data: ", supplyApyData);
-<<<<<<< HEAD
-=======
   });
 
 program
@@ -1121,7 +1119,6 @@ program
     const txHash = await connection.sendRawTransaction(recoverTx.serialize());
 
     console.log("Close reserve account success at tx", txHash);
->>>>>>> fix/over-stack-frame-when-claim-ste-reward
   });
 
 program
