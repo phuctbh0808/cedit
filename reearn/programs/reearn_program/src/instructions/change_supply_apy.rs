@@ -13,13 +13,13 @@ pub struct ChangeSupplyApy<'info> {
         seeds = [SUPPLY_APY_SEED, supply_apy.reserve.as_ref()],
         bump,
     )]
-    pub supply_apy: Account<'info, SupplyApy>,
+    pub supply_apy: Box<Account<'info, SupplyApy>>,
     #[account(
         mut,
         seeds = [CONFIG_SEED, config_account.admin.as_ref()],
         bump = config_account.bump[0],
     )]
-    pub config_account: Account<'info, Config>,
+    pub config_account: Box<Account<'info, Config>>,
 }
 
 pub fn exec(
