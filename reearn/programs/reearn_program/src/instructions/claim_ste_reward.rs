@@ -17,7 +17,7 @@ pub struct ClaimReserveReward<'info> {
         associated_token::mint = mint, 
         associated_token::authority = authority
     )]
-    pub token_account: Account<'info, TokenAccount>,
+    pub token_account: Box<Account<'info, TokenAccount>>,
     #[account(
         mut,
         seeds = [VAULT_SEED, config_account.key().as_ref()],
@@ -31,9 +31,9 @@ pub struct ClaimReserveReward<'info> {
         associated_token::mint = mint, 
         associated_token::authority = vault
     )]
-    pub vault_token_account: Account<'info, TokenAccount>,
+    pub vault_token_account: Box<Account<'info, TokenAccount>>,
     #[account(address = supply_apy.reward_token @ ReearnErrorCode::WrongRewardToken)]
-    pub mint: Account<'info, Mint>,
+    pub mint: Box<Account<'info, Mint>>,
     /// CHECK: general account for obligation
     pub obligation: AccountInfo<'info>,
      /// CHECK: general account for reserve
@@ -43,18 +43,18 @@ pub struct ClaimReserveReward<'info> {
         seeds = [RESERVE_REWARD_SEED, reserve.key.as_ref(), obligation.key.as_ref()],
         bump,
     )]
-    pub reserve_reward: Account<'info, ReserveReward>,
+    pub reserve_reward: Box<Account<'info, ReserveReward>>,
     #[account(
         mut,
         seeds = [SUPPLY_APY_SEED, reserve.key.as_ref()],
         bump,
     )]
-    pub supply_apy: Account<'info, SupplyApy>,
+    pub supply_apy: Box<Account<'info, SupplyApy>>,
     #[account(
         seeds = [CONFIG_SEED, config_account.admin.as_ref()],
         bump = config_account.bump[0],
     )]
-    pub config_account: Account<'info, Config>,
+    pub config_account: Box<Account<'info, Config>>,
     pub token_program: Program<'info, Token>,
 }
 

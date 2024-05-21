@@ -267,6 +267,9 @@ program
     let reNGN = new PublicKey("BfSYryW6Q93iUKE4uNsUtAdxQT9uU4GSVg2si3outLk1");
     let GAST = new PublicKey("GvTwnAQLTdM6fMZbuGQoVj5odefCC2FsDvaMgxqZV1fi");
     let PLUS1 = new PublicKey("AhDXc3sRW1xKPXwDwAmGb4JonRTka5rdSjg43owF53gg");
+    let APS = new PublicKey("BQEZ2K6Gj662kdKtaH4RhpuZDrPpxKm5ANFc9e27k2YU");
+    let BNB = new PublicKey("7G8x2UZSgVDZzbPSUKGjg2e2YAkMV8zwiP1525yxEK47");
+    let SOL = new PublicKey("3r7AzTijvTDoLGgMqcNXTJimwg8XyxUG6EaVqHXF8EWC");
     if (cluster == "mainnet") {
       reUSD = new PublicKey("4Q89182juiadeFgGw3fupnrwnnDmBhf7e7fHWxnUP3S3");
       reBTC = new PublicKey("GwPQTMg3eMVpDTEE3daZDtGsBtNHBK3X47dbBJvXUzF4");
@@ -281,6 +284,9 @@ program
     const caseNGN = "rengnmainnet";
     const caseGAST = "gastmainnet";
     const casePLUS1 = "plus1mainnet";
+    const caseAPS = "apsmainnet";
+    const caseBNB = "bnbmainnet";
+    const caseSOL = "solmainnet";
     const caseUSD_test = "reusdtestnet";
     const caseBTC_test = "rebtctestnet";
     const caseETH_test = "reethtestnet";
@@ -289,6 +295,9 @@ program
     const caseNGN_test = "rengntestnet";
     const caseGAST_test = "gasttestnet";
     const casePLUS1_test = "plus1testnet";
+    const caseAPS_test = "apstestnet";
+    const caseBNB_test = "bnbtestnet";
+    const caseSOL_test = "soltestnet";
     const tokenCase = token_sympol.toLowerCase() + cluster.toLowerCase();
 
     let oracleProduct = "";
@@ -326,6 +335,18 @@ program
         oracleProduct = "6sC5hhhhiVRuLZRAhWjHWdV4QHquSj6JpEZxZejqPz7Q";
         oraclePrice = "DyvCq8sSXJkbTaU2oXEB7PNwVaCuNbkz3CvmnKsigWHB";
         break;
+      case caseAPS:
+        oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
+        oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
+        break;
+      case caseBNB:
+        oracleProduct = "EdNEs5aVomEduCQpVFgXQjLMpb34tazX5UuSZgW6kuYB";
+        oraclePrice = "8KFnEVkcAtvzb7Z5YVRmPBqPrq2syKJM4EoW4xnjw4Qu";
+        break;
+      case caseSOL:
+        oracleProduct = "7Mf32AtCbCwny2bXqU2heFjoq2RjiLChnzBPGWbuGnLV";
+        oraclePrice = "32uDe1yQ26xG1acoscYU15Gdpio6toEa2HumJ4Ehsrv1";
+        break;
       case caseNGN_test:
         oracleProduct = "EUFxHUm5P5n6vY363sjtQcRG3XNf1qG56Bx2MZigpaQT";
         oraclePrice = "AeySuk5cgEjkJcBxPswnyzi77ctYNbsKkq5q2miEzPRS";
@@ -358,6 +379,18 @@ program
         oracleProduct = "6sC5hhhhiVRuLZRAhWjHWdV4QHquSj6JpEZxZejqPz7Q";
         oraclePrice = "DyvCq8sSXJkbTaU2oXEB7PNwVaCuNbkz3CvmnKsigWHB";
         break;
+      case caseAPS_test:
+        oracleProduct = "4gHMEuD2eg69QA8EKwdNAcnJB7WHZMhh84vhDWZ6o988";
+        oraclePrice = "9a6StiPXw1KC2pZ1qEavN6nobCSe2wkMQwaUniHsk9aL";
+        break;
+      case caseBNB_test:
+        oracleProduct = "EdNEs5aVomEduCQpVFgXQjLMpb34tazX5UuSZgW6kuYB";
+        oraclePrice = "8KFnEVkcAtvzb7Z5YVRmPBqPrq2syKJM4EoW4xnjw4Qu";
+        break;
+      case caseSOL_test:
+        oracleProduct = "7Mf32AtCbCwny2bXqU2heFjoq2RjiLChnzBPGWbuGnLV";
+        oraclePrice = "32uDe1yQ26xG1acoscYU15Gdpio6toEa2HumJ4Ehsrv1";
+        break;
     }
 
     console.log("Add new reserve");
@@ -387,6 +420,15 @@ program
         break;
       case "PLUS1":
         tokenProgramId = PLUS1;
+        break;
+      case "APS":
+        tokenProgramId = APS;
+        break;
+      case "BNB":
+        tokenProgramId = BNB;
+        break;
+      case "SOL":
+        tokenProgramId = SOL;
         break;
     }
 
@@ -911,7 +953,7 @@ program
 
     if (
       !PublicKey.isOnCurve(new PublicKey(reserve).toBase58()) ||
-      !PublicKey.isOnCurve(reserve) || 
+      !PublicKey.isOnCurve(reserve) ||
       !PublicKey.isOnCurve(reward) ||
       !PublicKey.isOnCurve(new PublicKey(reward).toBase58())
     ) {
@@ -1006,6 +1048,80 @@ program
     await delay(5000);
     const supplyApyData = await program.account.supplyApy.fetch(supplyApyAccount);
     console.log("Supply apy data: ", supplyApyData);
+<<<<<<< HEAD
+=======
+  });
+
+program
+  .command("close-supply-gauge")
+  .option("--program_id <string>", "Pubkey")
+  .option("--source <string>", "wallet keypair")
+  .option("--network_url <string>", "")
+  .option("--admin_key <string>", "Pubkey")
+  .option("--reserve <string>", "Pubkey")
+  .description("Close gauge for supply reserve")
+  .action(async (params) => {
+    let { program_id, source, network_url, admin_key, reserve  } =
+      params;
+
+    console.log("Close supply gauge");
+    console.log("params:", params);
+
+    if (
+      !PublicKey.isOnCurve(new PublicKey(reserve).toBase58()) ||
+      !PublicKey.isOnCurve(reserve)
+    ) {
+      console.error("Invalid pubkey address for reserve");
+      return;
+    }
+
+    const connection = new Connection(network_url, opts);
+    const sourceKey = JSON.parse(fs.readFileSync(source));
+    const keypair = Keypair.fromSecretKey(Uint8Array.from(sourceKey));
+    const wallet = new anchor.Wallet(keypair);
+    const provider = new anchor.AnchorProvider(connection, wallet, opts);
+    const programId = new PublicKey(program_id);
+    const program = new anchor.Program(IDL, programId, provider);
+    let sourceOwner = keypair.publicKey;
+    let configAccount: PublicKey;
+    let supplyApyAccount: PublicKey;
+    let bump: number;
+    let supplyApyBump: number;
+    const CONFIG_SEED = "supernova";
+    const SUPPLY_REWARD_SEED = "nevergonnaseeyouagain";
+    const reserveKey = new PublicKey(reserve);
+    [configAccount, bump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(CONFIG_SEED), new PublicKey(admin_key).toBuffer()],
+      programId,
+    );
+
+    [supplyApyAccount, supplyApyBump] = anchor.web3.PublicKey.findProgramAddressSync(
+      [Buffer.from(SUPPLY_REWARD_SEED), reserveKey.toBuffer()],
+      programId,
+    );
+    const instructions = [
+        await program.methods
+        .closeReserveReward(reserveKey)
+        .accounts({
+          feePayer: sourceOwner,  
+          authority: sourceOwner,
+          supplyApy: supplyApyAccount,
+          configAccount,
+          systemProgram: SystemProgram.programId,
+        })
+        .instruction(),
+    ];
+
+    const tx = new Transaction().add(...instructions);
+    tx.recentBlockhash = (await connection.getLatestBlockhash("finalized")).blockhash;
+    tx.feePayer = sourceOwner;
+    const recoverTx = Transaction.from(tx.serialize({ requireAllSignatures: false }));
+    recoverTx.sign(keypair);
+
+    const txHash = await connection.sendRawTransaction(recoverTx.serialize());
+
+    console.log("Close reserve account success at tx", txHash);
+>>>>>>> fix/over-stack-frame-when-claim-ste-reward
   });
 
 program

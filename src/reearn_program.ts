@@ -743,6 +743,18 @@ export type ReearnProgram = {
           },
           {
             "name": "InvalidAccountOwner"
+          },
+          {
+            "name": "StartTimeAfterEndTime"
+          },
+          {
+            "name": "StartTimeBeforeCurrent"
+          },
+          {
+            "name": "StartTimeImmutable"
+          },
+          {
+            "name": "EndTimeAfterCurrent"
           }
         ]
       }
@@ -1495,6 +1507,18 @@ export const IDL: ReearnProgram = {
           },
           {
             "name": "InvalidAccountOwner"
+          },
+          {
+            "name": "StartTimeAfterEndTime"
+          },
+          {
+            "name": "StartTimeBeforeCurrent"
+          },
+          {
+            "name": "StartTimeImmutable"
+          },
+          {
+            "name": "EndTimeAfterCurrent"
           }
         ]
       }

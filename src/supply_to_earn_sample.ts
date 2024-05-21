@@ -72,9 +72,10 @@ let initializeFn = async () => {
     programId,
   );
 
+  const currentTime = await connection.getBlockTime(await connection.getSlot()) || Math.trunc(new Date().getTime() / 1000);
   const instructions = [
     await program.methods
-      .initReserveReward(reserve, new PublicKey(RELEND_MINT), 2.0, 9)
+      .initReserveReward(reserve, new PublicKey(RELEND_MINT), 2.0, 9, new BN(currentTime + 100), new BN(currentTime + 1000))
       .accounts({
         feePayer: payerAccount,
         authority: payerAccount,
@@ -106,9 +107,10 @@ let changeSupplyAPY = async () => {
     programId,
   );
 
+  const currentTime = await connection.getBlockTime(await connection.getSlot()) || Math.trunc(new Date().getTime() / 1000);
   const instructions = [
     await program.methods
-      .changeSupplyApy(new PublicKey(RELEND_MINT), 3.0, 9)
+      .changeSupplyApy(new PublicKey(RELEND_MINT), 3.0, 9, new BN(currentTime + 100), new BN(currentTime + 1000))
       .accounts({
         authority: payerAccount,
         supplyApy: supplyApyAccount,

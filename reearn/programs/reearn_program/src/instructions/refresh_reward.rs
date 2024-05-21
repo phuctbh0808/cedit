@@ -47,7 +47,7 @@ pub fn exec(
         if clock.unix_timestamp - obligation_reward.last_updated > config.lock_duration as i64 {
             require!(expo <= 0, ReearnErrorCode::ExpoPositiveNonSupport);
             obligation_reward.exponent = expo;
-            obligation_reward.reward_amount = amount;
+            obligation_reward.reward_amount = obligation_reward.reward_amount + amount;
             obligation_reward.last_updated = clock.unix_timestamp;
         } else {
             msg!("Only allowed to refresh once per lock duration")
