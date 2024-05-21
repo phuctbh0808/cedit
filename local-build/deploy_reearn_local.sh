@@ -34,8 +34,8 @@ npx ts-node src/index.ts \
     --reward $REW_TOKEN_MINT \
     --reward_decimals 6 \
     --apy 1.2 \
-    --start_time "16/05/2024 20:00" \
-    --end_time "20/05/2024 20:00"
+    --start_time "22/05/2024 20:00" \
+    --end_time "23/05/2024 20:00"
 
 echo "SUPPLY TO EARN"
 npx ts-node src/index.ts \
